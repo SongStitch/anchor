@@ -30,20 +30,27 @@ func main() {
 	parseNode(node)
 
 	var builder strings.Builder
-	writeDockerfile(&builder, node)
+	writeDockerfile(&builder, node, true)
 	os.WriteFile("Dockerfile", []byte(builder.String()), 0644)
 }
 
-func writeDockerfile(builder *strings.Builder, node *parser.Node) {
-	builder.WriteString(node.Value)
+func writeDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bool) {
+	if node.Value == "FROM" || node.Value == "RUN" {
+		useOriginal = false
+	}
+	if useOriginal {
+		builder.WriteString(node.Original)
+	} else {
+		builder.WriteString(node.Value)
+	}
 	for _, child := range node.Children {
-		writeDockerfile(builder, child)
+		writeDockerfile(builder, child, useOriginal)
 		builder.WriteString("\n")
 	}
 
 	if node.Next != nil {
 		builder.WriteString(" ")
-		writeDockerfile(builder, node.Next)
+		writeDockerfile(builder, node.Next, useOriginal)
 	}
 }
 
