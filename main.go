@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/crane"
@@ -83,11 +86,17 @@ func parseRunCommand(node *parser.Node) {
 		if len(packageNames) == 0 {
 			continue
 		}
-		packageMap := fetchPackageVersions(packageNames)
+		architecture := "arm64"
+		packageMap := fetchPackageVersions(packageNames, architecture)
 		elements := strings.Split(commands[i], " ")
 		for j := range elements {
 			if _, ok := packageMap[elements[j]]; ok {
-				elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+				elements[j] = fmt.Sprintf(
+					"%s:%s=%s",
+					elements[j],
+					architecture,
+					packageMap[elements[j]],
+				)
 			}
 		}
 		commands[i] = strings.Join(elements, " ")
@@ -132,14 +141,40 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func fetchPackageVersions(packages []string) map[string]string {
-	// TODO: Actually fetch package versions
-	versionMap := make(map[string]string)
+func fetchPackageVersions(packages []string, architecture string) map[string]string {
+	var b bytes.Buffer
+	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
 	for _, pkg := range packages {
-		versionMap[pkg] = "latest"
+		command += " " + pkg + ":" + architecture
 	}
+	fmt.Println(command)
+	c := exec.Command("docker", "run", "--rm", "golang:1.22-bookworm", "bash", "-c", command)
+	c.Stdout = &b
+	c.Stderr = os.Stderr
+	if err := c.Run(); err != nil {
+		log.Fatalf("Failed to run command: %v", err)
+	}
+	versions := parsePackageVersions(b.String())
+	return versions
+}
 
-	return versionMap
+func parsePackageVersions(s string) map[string]string {
+	versions := make(map[string]string)
+	currentPackage := ""
+	for _, line := range strings.Split(s, "\n") {
+		if strings.HasPrefix(line, "Package:") {
+			currentPackage = strings.Split(line, ": ")[1]
+			continue
+		}
+		if strings.HasPrefix(line, "Version:") {
+			if currentPackage == "" {
+				log.Fatalf("Version found before package, offending line: %s", line)
+			}
+			versions[currentPackage] = strings.Split(line, ": ")[1]
+			currentPackage = ""
+		}
+	}
+	return versions
 }
 
 func attachDockerSha(node *parser.Node) {
