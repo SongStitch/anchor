@@ -86,7 +86,7 @@ func parseRunCommand(node *parser.Node) {
 		if len(packageNames) == 0 {
 			continue
 		}
-		architecture := "arm64"
+		architecture := "amd64"
 		packageMap := fetchPackageVersions(packageNames, architecture)
 		elements := strings.Split(commands[i], " ")
 		for j := range elements {
@@ -100,6 +100,11 @@ func parseRunCommand(node *parser.Node) {
 			}
 		}
 		commands[i] = strings.Join(elements, " ")
+		commands[i] = fmt.Sprintf(
+			"dpkg --add-architecture %s && apt-get update && %s",
+			architecture,
+			commands[i],
+		)
 	}
 
 	node.Value = strings.Join(commands, "&&")
@@ -147,7 +152,6 @@ func fetchPackageVersions(packages []string, architecture string) map[string]str
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	fmt.Println(command)
 	c := exec.Command("docker", "run", "--rm", "golang:1.22-bookworm", "bash", "-c", command)
 	c.Stdout = &b
 	c.Stderr = os.Stderr
