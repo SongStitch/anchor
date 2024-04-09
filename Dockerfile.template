@@ -1,3 +1,4 @@
 FROM golang:1.22-bookworm as builder
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && \
+    apt-get install -y curl wget
