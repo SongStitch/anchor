@@ -12,6 +12,8 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
+var dockerImage string
+
 func main() {
 	content, err := os.Open("Dockerfile.template")
 	if err != nil {
@@ -31,7 +33,10 @@ func main() {
 
 	var builder strings.Builder
 	writeDockerfile(&builder, node, true)
-	os.WriteFile("Dockerfile", []byte(builder.String()), 0644)
+	err = os.WriteFile("Dockerfile", []byte(builder.String()), 0600)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func writeDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bool) {
@@ -70,6 +75,7 @@ func parseNode(node *parser.Node) {
 	}
 
 	if node.Value == "FROM" {
+		dockerImage = node.Next.Value
 		attachDockerSha(node.Next)
 	} else if node.Value == "RUN" {
 		parseRunCommand(node.Next)
@@ -108,7 +114,7 @@ func parseRunCommand(node *parser.Node) {
 		}
 		commands[i] = strings.Join(elements, " ")
 		commands[i] = fmt.Sprintf(
-			"dpkg --add-architecture %s && apt-get update && %s",
+			" dpkg --add-architecture %s && apt-get update && %s", // leading space is necessary
 			architecture,
 			commands[i],
 		)
@@ -153,13 +159,17 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func fetchPackageVersions(packages []string, architecture string) map[string]string {
+func fetchPackageVersions(packages []string, architecture string,
+) map[string]string {
 	var b bytes.Buffer
 	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	c := exec.Command("docker", "run", "--rm", "golang:1.22-bookworm", "bash", "-c", command)
+	if dockerImage == "" {
+		log.Fatalf("Docker image not set")
+	}
+	c := exec.Command("docker", "run", "--rm", dockerImage, "bash", "-c", command)
 	c.Stdout = &b
 	c.Stderr = os.Stderr
 	if err := c.Run(); err != nil {
