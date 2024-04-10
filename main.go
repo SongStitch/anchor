@@ -33,7 +33,6 @@ func main() {
 
 	var builder strings.Builder
 	writeDockerfile(&builder, node, true)
-	fmt.Println(builder.String())
 	err = os.WriteFile("Dockerfile", []byte(builder.String()), 0600)
 	if err != nil {
 		panic(err)
