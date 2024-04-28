@@ -10,32 +10,84 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/spf13/cobra"
 )
 
-var dockerImage string
+type Options struct {
+	Architectures []string
+	OutputFile    string
+	InputFile     string
+}
+
+var image string
+
+var rootCmd = &cobra.Command{
+	Use:   "dockerlock",
+	Short: "dockerlock is a tool to lock down Dockerfiles to specific versions",
+	Long:  "dockerlock is a tool to lock down Dockerfiles to specific versions for their base images and all packages.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := cmd.Flags().GetString("output")
+		if err != nil {
+			panic(err)
+		}
+		architectures, err := cmd.Flags().GetString("architectures")
+		if err != nil {
+			panic(err)
+		}
+		input, err := cmd.Flags().GetString("input")
+		if err != nil {
+			panic(err)
+		}
+
+		options := Options{
+			Architectures: strings.Split(architectures, ","),
+			OutputFile:    output,
+			InputFile:     input,
+		}
+		appendArch := len(options.Architectures) > 1
+
+		for _, architecture := range options.Architectures {
+			content, err := os.Open(options.InputFile)
+			if err != nil {
+				panic(err)
+			}
+
+			defer content.Close()
+			result, err := parser.Parse(content)
+			if err != nil {
+				panic(err)
+			}
+
+			node := result.AST
+			printNode(node)
+
+			parseNode(node, architecture)
+
+			var builder strings.Builder
+			writeDockerfile(&builder, node, true)
+			outputName := options.OutputFile
+			if appendArch {
+				outputName = fmt.Sprintf("%s.%s", outputName, architecture)
+			}
+      log.Printf("Writing to %s", outputName)
+			err = os.WriteFile(outputName, []byte(builder.String()), 0600)
+			if err != nil {
+				panic(err)
+			}
+		}
+	},
+}
 
 func main() {
-	content, err := os.Open("Dockerfile.template")
+	rootCmd.PersistentFlags().
+		StringP("input", "i", "Dockerfile.template", "Dockerfile to lock down")
+	rootCmd.PersistentFlags().
+		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name.")
+	rootCmd.PersistentFlags().
+		StringP("architectures", "a", "arm64", "Comma separated list of architectures to lock down to")
+	err := rootCmd.Execute()
 	if err != nil {
-		panic(err)
-	}
-
-	defer content.Close()
-	result, err := parser.Parse(content)
-	if err != nil {
-		panic(err)
-	}
-
-	node := result.AST
-	printNode(node)
-
-	parseNode(node)
-
-	var builder strings.Builder
-	writeDockerfile(&builder, node, true)
-	err = os.WriteFile("Dockerfile", []byte(builder.String()), 0600)
-	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -69,26 +121,25 @@ func printNode(node *parser.Node) {
 	}
 }
 
-func parseNode(node *parser.Node) {
+func parseNode(node *parser.Node, architecture string) {
 	if node == nil {
 		return
 	}
 
 	if node.Value == "FROM" {
-		dockerImage = node.Next.Value
-		attachDockerSha(node.Next)
+		image = attachDockerSha(node.Next)
 	} else if node.Value == "RUN" {
-		parseRunCommand(node.Next)
+		parseRunCommand(node.Next, architecture)
 	} else if node.Next != nil {
-		parseNode(node.Next)
+		parseNode(node.Next, architecture)
 	}
 
 	for _, child := range node.Children {
-		parseNode(child)
+		parseNode(child, architecture)
 	}
 }
 
-func parseRunCommand(node *parser.Node) {
+func parseRunCommand(node *parser.Node, architecture string) {
 	if node == nil {
 		return
 	}
@@ -99,7 +150,6 @@ func parseRunCommand(node *parser.Node) {
 		if len(packageNames) == 0 {
 			continue
 		}
-		architecture := "amd64"
 		packageMap := fetchPackageVersions(packageNames, architecture)
 		elements := strings.Split(commands[i], " ")
 		for j := range elements {
@@ -114,7 +164,7 @@ func parseRunCommand(node *parser.Node) {
 		}
 		commands[i] = strings.Join(elements, " ")
 		commands[i] = fmt.Sprintf(
-			" dpkg --add-architecture %s && apt-get update && %s", // leading space is necessary
+			"dpkg --add-architecture %s && apt-get update && %s",
 			architecture,
 			commands[i],
 		)
@@ -159,17 +209,14 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func fetchPackageVersions(packages []string, architecture string,
-) map[string]string {
+func fetchPackageVersions(packages []string, architecture string) map[string]string {
+	fmt.Println(image)
 	var b bytes.Buffer
 	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	if dockerImage == "" {
-		log.Fatalf("Docker image not set")
-	}
-	c := exec.Command("docker", "run", "--rm", dockerImage, "bash", "-c", command)
+	c := exec.Command("docker", "run", "--rm", image, "bash", "-c", command)
 	c.Stdout = &b
 	c.Stderr = os.Stderr
 	if err := c.Run(); err != nil {
@@ -198,13 +245,14 @@ func parsePackageVersions(s string) map[string]string {
 	return versions
 }
 
-func attachDockerSha(node *parser.Node) {
+func attachDockerSha(node *parser.Node) string {
 	if node == nil {
-		return
+		return ""
 	}
 	digest, err := crane.Digest(node.Value)
 	if err != nil {
 		panic(err)
 	}
 	node.Value = fmt.Sprintf("%s@%s", node.Value, digest)
+	return node.Value
 }
