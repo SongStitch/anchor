@@ -296,9 +296,9 @@ func parsePackageVersions(s string) (map[string]string, error) {
 
 func attachDockerSha(node *parser.Node) (string, error) {
 	if node.Next != nil && strings.ToLower(node.Next.Value) == "as" {
-		color.Blue("Checking %s image...", node.Next.Next.Value)
+		color.Blue("Parsing %s image...", node.Next.Next.Value)
 	} else {
-		color.Blue("Checking the final image")
+		color.Blue("Parsing the final image")
 	}
 	if node == nil {
 		return "", nil
