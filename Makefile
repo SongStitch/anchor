@@ -17,7 +17,7 @@ go-staticcheck:
 golines-format:
 	@printf "%s\n" "==== Running golines ====="
 	golines --write-output --ignored-dirs=vendor .
-	
+
 lint: go-staticcheck
 
 format: format-go golines-format
@@ -26,4 +26,3 @@ format-lint: format lint
 
 build: format-lint
 	go build -o bin/${BINARY_NAME} *.go
-
