@@ -74,7 +74,7 @@ var rootCmd = &cobra.Command{
 			node := result.AST
 			printNode(node)
 
-			color.Yellow("Locking to architecture: %s\n", architecture)
+			color.Cyan("Locking to architecture: %s\n", architecture)
 			err = parseNode(node, architecture)
 			if err != nil {
 				return err
