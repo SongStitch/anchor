@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -21,7 +22,6 @@ type Options struct {
 }
 
 var image string
-var writeOutput bool
 
 var rootCmd = &cobra.Command{
 	Use:           "dockerlock",
@@ -48,6 +48,14 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 		input, err := cmd.Flags().GetString("input")
+		if err != nil {
+			return err
+		}
+		dryRun, err := cmd.Flags().GetBool("dry-run")
+		if err != nil {
+			return err
+		}
+		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
 			return err
 		}
@@ -86,20 +94,36 @@ var rootCmd = &cobra.Command{
 			if appendArch {
 				outputName = fmt.Sprintf("%s.%s", outputName, architecture)
 			}
-			if writeOutput {
-				absPath, err := filepath.Abs(outputName)
-				if err != nil {
-					return err
-				}
-				err = os.WriteFile(outputName, []byte(builder.String()), 0600)
-				if err != nil {
-					return err
-				}
-				color.Green("Generated pinned Dockerfile: %s", absPath)
-			} else {
+
+			if dryRun {
 				color.Green("Generated pinned Dockerfile\n")
 				fmt.Println(builder.String())
+				return nil
 			}
+
+			absPath, err := filepath.Abs(outputName)
+			if err != nil {
+				return err
+			}
+			if _, err := os.Stat(absPath); err == nil && !yes {
+				color.Yellow("File %s already exists. Overwrite? (y/n)", absPath)
+				reader := bufio.NewReader(os.Stdin)
+				response, err := reader.ReadString('\n')
+				if err != nil {
+					return err
+				}
+
+				if strings.ToLower(response) != "y\n" {
+					color.Green("Generated pinned Dockerfile\n")
+					fmt.Println(builder.String())
+					return fmt.Errorf("Exiting without writing file")
+				}
+			}
+			err = os.WriteFile(outputName, []byte(builder.String()), 0600)
+			if err != nil {
+				return err
+			}
+			color.Green("Generated pinned Dockerfile: %s", absPath)
 		}
 		return nil
 	},
@@ -109,11 +133,13 @@ func main() {
 	rootCmd.PersistentFlags().
 		StringP("input", "i", "Dockerfile.template", "Dockerfile to lock")
 	rootCmd.PersistentFlags().
-		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name.")
+		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name")
 	rootCmd.PersistentFlags().
 		StringP("architectures", "a", "arm64", "Comma delimited list of architectures to lock")
-	rootCmd.Flags().
-		BoolVarP(&writeOutput, "write", "w", false, "Write the Dockerfile to the output file")
+	rootCmd.PersistentFlags().
+		BoolP("dry-run", "", false, "Write the output to stdout instead of a file")
+	rootCmd.PersistentFlags().
+		BoolP("yes", "y", false, "Write the output to the file without confirmation when the file exists. This will overwrite the file")
 	err := rootCmd.Execute()
 	if err != nil {
 		color.Red("%s", err)
