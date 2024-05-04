@@ -313,7 +313,6 @@ func attachDockerSha(node *parser.Node) (string, error) {
 }
 
 func isDockerInstalled() bool {
-	// Execute "docker --version" command
 	cmd := exec.Command("docker", "--version")
 	if err := cmd.Run(); err != nil {
 		return false
@@ -322,7 +321,6 @@ func isDockerInstalled() bool {
 }
 
 func isDockerRunning() bool {
-	// Execute "docker info" command
 	cmd := exec.Command("docker", "info")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
