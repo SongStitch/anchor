@@ -24,10 +24,21 @@ var image string
 var writeOutput bool
 
 var rootCmd = &cobra.Command{
-	Use:   "dockerlock",
-	Short: "dockerlock is a tool to lock Dockerfiles to specific versions",
-	Long:  "dockerlock is a tool to lock Dockerfiles to specific versions for their base images and packages.",
+	Use:           "dockerlock",
+	Short:         "dockerlock is a tool to lock Dockerfiles to specific versions",
+	Long:          "dockerlock is a tool to lock Dockerfiles to specific versions for their base images and packages.",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
+		if isDockerInstalled() {
+			if !isDockerRunning() {
+				return fmt.Errorf("Docker is not running")
+			}
+		} else {
+			return fmt.Errorf("Docker is not installed")
+		}
+
 		output, err := cmd.Flags().GetString("output")
 		if err != nil {
 			return err
@@ -49,7 +60,6 @@ var rootCmd = &cobra.Command{
 		appendArch := len(options.Architectures) > 1
 
 		for _, architecture := range options.Architectures {
-			color.Yellow("Locking to architecture: %s\n", architecture)
 			content, err := os.Open(options.InputFile)
 			if err != nil {
 				return err
@@ -64,6 +74,7 @@ var rootCmd = &cobra.Command{
 			node := result.AST
 			printNode(node)
 
+			color.Yellow("Locking to architecture: %s\n", architecture)
 			err = parseNode(node, architecture)
 			if err != nil {
 				return err
@@ -299,4 +310,24 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	fmt.Printf("\tLocked %s to %s\n", node.Value, digest)
 	node.Value = fmt.Sprintf("%s@%s", node.Value, digest)
 	return node.Value, nil
+}
+
+func isDockerInstalled() bool {
+	// Execute "docker --version" command
+	cmd := exec.Command("docker", "--version")
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
+
+func isDockerRunning() bool {
+	// Execute "docker info" command
+	cmd := exec.Command("docker", "info")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+	// Check if output contains information indicating Docker is running
+	return strings.Contains(string(output), "Server:")
 }
