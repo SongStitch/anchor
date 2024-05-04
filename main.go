@@ -231,7 +231,7 @@ func parseRunCommand(node *parser.Node, architecture string) error {
 		}
 		commands[i] = strings.Join(elements, " ")
 		commands[i] = fmt.Sprintf(
-			"dpkg --add-architecture %s && apt-get update && %s",
+			" dpkg --add-architecture %s && apt-get update && %s",
 			architecture,
 			commands[i],
 		)
