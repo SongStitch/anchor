@@ -1,4 +1,4 @@
-package main
+package dockerlock
 
 import (
 	"bufio"
@@ -10,6 +10,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/spf13/cobra"
+
+	dl "github.com/songstitch/docker-lock"
 )
 
 type Options struct {
@@ -18,7 +20,19 @@ type Options struct {
 	InputFile     string
 }
 
-var image string
+func init() {
+	rootCmd.PersistentFlags().
+		StringP("input", "i", "Dockerfile.template", "Dockerfile to lock")
+	rootCmd.PersistentFlags().
+		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name")
+	rootCmd.PersistentFlags().
+		StringP("architectures", "a", "arm64", "Comma delimited list of architectures to lock")
+	rootCmd.PersistentFlags().
+		BoolP("dry-run", "", false, "Write the output to stdout instead of a file")
+	rootCmd.PersistentFlags().
+		BoolP("yes", "y", false, "Write the output to the file without confirmation when the file exists. This will overwrite the file")
+
+}
 
 var rootCmd = &cobra.Command{
 	Use:           "dockerlock",
@@ -28,8 +42,8 @@ var rootCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		if isDockerInstalled() {
-			if !isDockerRunning() {
+		if dl.IsDockerInstalled() {
+			if !dl.IsDockerRunning() {
 				return fmt.Errorf("docker is not running")
 			}
 		} else {
@@ -77,16 +91,17 @@ var rootCmd = &cobra.Command{
 			}
 
 			node := result.AST
-			printNode(node)
+			dl.PrintNode(node)
 
 			color.Cyan("Locking to architecture: %s\n", architecture)
-			err = parseNode(node, architecture)
+			image := ""
+			err = dl.ParseNode(node, architecture, &image)
 			if err != nil {
 				return err
 			}
 
 			var builder strings.Builder
-			writeDockerfile(&builder, node, true)
+			dl.WriteDockerfile(&builder, node, true)
 			outputName := options.OutputFile
 			if appendArch {
 				outputName = fmt.Sprintf("%s.%s", outputName, architecture)
@@ -126,17 +141,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func main() {
-	rootCmd.PersistentFlags().
-		StringP("input", "i", "Dockerfile.template", "Dockerfile to lock")
-	rootCmd.PersistentFlags().
-		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name")
-	rootCmd.PersistentFlags().
-		StringP("architectures", "a", "arm64", "Comma delimited list of architectures to lock")
-	rootCmd.PersistentFlags().
-		BoolP("dry-run", "", false, "Write the output to stdout instead of a file")
-	rootCmd.PersistentFlags().
-		BoolP("yes", "y", false, "Write the output to the file without confirmation when the file exists. This will overwrite the file")
+func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		color.Red("%s", err)

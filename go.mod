@@ -1,4 +1,4 @@
-module github.com/SongStitch/docker-lock
+module github.com/songstitch/docker-lock
 
 go 1.22.1
 

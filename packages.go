@@ -1,4 +1,4 @@
-package main
+package dockerlock
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 func fetchPackageVersions(
 	packages []string,
 	architecture string,
+	image string,
 ) (map[string]string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
@@ -96,7 +97,7 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func parseRunCommand(node *parser.Node, architecture string) error {
+func parseRunCommand(node *parser.Node, architecture string, image string) error {
 	if node == nil {
 		return nil
 	}
@@ -107,7 +108,7 @@ func parseRunCommand(node *parser.Node, architecture string) error {
 		if len(packageNames) == 0 {
 			continue
 		}
-		packageMap, err := fetchPackageVersions(packageNames, architecture)
+		packageMap, err := fetchPackageVersions(packageNames, architecture, image)
 		if err != nil {
 			return err
 		}
