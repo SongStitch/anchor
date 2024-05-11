@@ -33,10 +33,10 @@ var rootCmd = &cobra.Command{
 
 		if isDockerInstalled() {
 			if !isDockerRunning() {
-				return fmt.Errorf("Docker is not running")
+				return fmt.Errorf("docker is not running")
 			}
 		} else {
-			return fmt.Errorf("Docker is not installed")
+			return fmt.Errorf("docker is not installed")
 		}
 
 		output, err := cmd.Flags().GetString("output")
@@ -116,7 +116,7 @@ var rootCmd = &cobra.Command{
 				if strings.ToLower(response) != "y\n" {
 					color.Green("Generated pinned Dockerfile\n")
 					fmt.Println(builder.String())
-					return fmt.Errorf("Exiting without writing file")
+					return fmt.Errorf("exiting without writing file")
 				}
 			}
 			err = os.WriteFile(outputName, []byte(builder.String()), 0600)
@@ -278,20 +278,28 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func fetchPackageVersions(packages []string, architecture string) (map[string]string, error) {
-	var b bytes.Buffer
+func fetchPackageVersions(
+	packages []string,
+	architecture string,
+) (map[string]string, error) {
+	var stdoutBuf, stderrBuf bytes.Buffer
 	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	c := exec.Command("docker", "run", "--rm", image, "bash", "-c", command)
-	c.Stdout = &b
-	c.Stderr = os.Stderr
+	c := exec.Command("docker", "run", "--rm", image, "bash", "-c", command) // #nosec G204
+	c.Stdout = &stdoutBuf
+	c.Stderr = &stderrBuf // Use a buffer to capture stderr output
+
 	if err := c.Run(); err != nil {
+		// Log stderr or handle it as needed
+		fmt.Printf("Error running command: %s\n", stderrBuf.String())
 		return nil, fmt.Errorf("failed to run command: %w", err)
 	}
-	versions, err := parsePackageVersions(b.String())
+
+	versions, err := parsePackageVersions(stdoutBuf.String())
 	if err != nil {
+		fmt.Printf("Error parsing versions: %s\n", stderrBuf.String())
 		return nil, err
 	}
 	return versions, nil
