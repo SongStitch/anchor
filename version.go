@@ -15,7 +15,7 @@ func init() {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of bladectl",
+	Short: "Print the version number of docker-lock",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if version == "" {
 			version = "development"
