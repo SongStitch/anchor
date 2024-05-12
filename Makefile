@@ -70,7 +70,7 @@ gosec: ## Runs gosec on the codebase
 
 format-go: ## Runs go-fmt on the codebase
 	@printf "%s\n" "==== Running go-fmt ====="
-	gofmt -s -w *.go
+	gofmt -s -w *.go cmd/*.go
 
 golines-format: ## Runs golines on the codebase
 	# https://github.com/segmentio/golines
@@ -82,7 +82,7 @@ go-staticcheck: ## Runs staticcheck on the codebase
 	staticcheck ./...
 
 run: ## Runs the binary
-	go run *.go $(ARGS)
+	go run cmd/*.go $(ARGS)
 
 build: format-lint ## Builds the binary for your current platform
 	go build -o bin/${BINARY_NAME} cmd/*.go
