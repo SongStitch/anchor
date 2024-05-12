@@ -35,11 +35,19 @@ func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bo
 	if useOriginal {
 		builder.WriteString(node.Original)
 	} else {
-		builder.WriteString(node.Value)
+		splits := strings.Split(node.Value, "  ")
+		splitsTrimmed := []string{}
+		for _, split := range splits {
+			if split != "" {
+				splitsTrimmed = append(splitsTrimmed, strings.TrimSpace(split))
+			}
+		}
+		s := strings.Join(splitsTrimmed, " \\ \n\t")
+		builder.WriteString(s)
 	}
 	for _, child := range node.Children {
 		WriteDockerfile(builder, child, useOriginal)
-		builder.WriteString("\n")
+		builder.WriteString("\n\n")
 	}
 
 	if node.Next != nil {
