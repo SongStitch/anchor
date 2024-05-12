@@ -1,4 +1,4 @@
-package dockerlock
+package anchor
 
 import (
 	"reflect"

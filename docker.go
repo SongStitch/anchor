@@ -1,4 +1,4 @@
-package dockerlock
+package anchor
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	if err != nil {
 		return digest, err
 	}
-	fmt.Printf("\tLocked %s to %s\n", node.Value, digest)
+	fmt.Printf("\tAnchored %s to %s\n", node.Value, digest)
 	node.Value = fmt.Sprintf("%s@%s", node.Value, digest)
 	return node.Value, nil
 }
