@@ -1,9 +1,9 @@
 .DEFAULT_GOAL := help
-BINARY_NAME=docker-lock
+BINARY_NAME=anchor
 LDFLAGS=-s -w
 
 # Package path where the version and commit variables are located
-PKG := docker-lock/cmd
+PKG := anchor/cmd
 
 # Dynamically set version and commit using git
 VERSION := $(shell git describe --tags --abbrev=0)

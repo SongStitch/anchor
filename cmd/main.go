@@ -1,7 +1,7 @@
 package main
 
-import "github.com/songstitch/docker-lock/cmd/dockerlock"
+import "github.com/songstitch/anchor/cmd/anchor"
 
 func main() {
-	dockerlock.Execute()
+	anchor.Execute()
 }

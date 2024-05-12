@@ -1,4 +1,4 @@
-package dockerlock
+package anchor
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ func init() {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of docker-lock",
+	Short: "Print the version number of anchor",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if version == "" {
 			version = "development"

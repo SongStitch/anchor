@@ -1,4 +1,4 @@
-package dockerlock
+package anchor
 
 import (
 	"bytes"
@@ -51,7 +51,7 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
 			fmt.Printf(
-				"\tLocked %s to %s\n",
+				"\tAnchored %s to %s\n",
 				currentPackage,
 				versions[currentPackage],
 			)
