@@ -42,7 +42,7 @@ func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bo
 				splitsTrimmed = append(splitsTrimmed, strings.TrimSpace(split))
 			}
 		}
-		s := strings.Join(splitsTrimmed, " \\ \n\t")
+		s := strings.Join(splitsTrimmed, " \\\n    ")
 		builder.WriteString(s)
 	}
 	for _, child := range node.Children {
