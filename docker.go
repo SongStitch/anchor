@@ -28,7 +28,19 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	return node.Value, nil
 }
 
-func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bool) {
+func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bool, currentLine int, lines []string) int {
+	// this allows us to maintain things like comments and newlines in the original Dockerfile
+	if currentLine != 0 && node.StartLine != 0 && currentLine < node.StartLine {
+		for i := currentLine + 1; i < node.StartLine; i++ {
+			builder.WriteString(lines[i-1])
+			builder.WriteString("\n")
+		}
+	}
+	if currentLine == 0 {
+		currentLine = 1
+	} else if node.EndLine != 0 {
+		currentLine = node.EndLine
+	}
 	if node.Value == "FROM" || node.Value == "RUN" {
 		useOriginal = false
 	}
@@ -46,24 +58,15 @@ func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bo
 		builder.WriteString(s)
 	}
 	for _, child := range node.Children {
-		WriteDockerfile(builder, child, useOriginal)
-		builder.WriteString("\n\n")
+		currentLine = WriteDockerfile(builder, child, useOriginal, currentLine, lines)
+		builder.WriteString("\n")
 	}
 
 	if node.Next != nil {
 		builder.WriteString(" ")
-		WriteDockerfile(builder, node.Next, useOriginal)
+		currentLine = WriteDockerfile(builder, node.Next, useOriginal, currentLine, lines)
 	}
-}
-
-func PrintNode(node *parser.Node) {
-	for _, child := range node.Children {
-		PrintNode(child)
-	}
-
-	if node.Next != nil {
-		PrintNode(node.Next)
-	}
+	return currentLine
 }
 
 func ParseNode(node *parser.Node, architecture string, image *string) error {
