@@ -2,6 +2,7 @@ package anchor
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -10,16 +11,14 @@ import (
 )
 
 func fetchPackageVersions(
-	packages []string,
-	architecture string,
-	image string,
+	ctx context.Context, packages []string, architecture string, image string,
 ) (map[string]string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	command := "dpkg --add-architecture " + architecture + " && apt-get update && apt-cache show --"
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	c := exec.Command("docker", "run", "--rm", image, "bash", "-c", command) // #nosec G204
+	c := exec.CommandContext(ctx, "docker", "run", "--rm", image, "bash", "-c", command) // #nosec G204
 	c.Stdout = &stdoutBuf
 	c.Stderr = &stderrBuf // Use a buffer to capture stderr output
 
@@ -97,7 +96,7 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func parseRunCommand(node *parser.Node, architecture string, image string) error {
+func parseRunCommand(ctx context.Context, node *parser.Node, architecture string, image string) error {
 	if node == nil {
 		return nil
 	}
@@ -108,7 +107,7 @@ func parseRunCommand(node *parser.Node, architecture string, image string) error
 		if len(packageNames) == 0 {
 			continue
 		}
-		packageMap, err := fetchPackageVersions(packageNames, architecture, image)
+		packageMap, err := fetchPackageVersions(ctx, packageNames, architecture, image)
 		if err != nil {
 			return err
 		}
