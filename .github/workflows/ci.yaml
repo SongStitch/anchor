@@ -115,6 +115,15 @@ jobs:
         with:
           go-version: "1.22"
 
+      - name: Setup docker (missing on MacOS)
+        if: runner.os == 'macos'
+        run: |
+          brew install docker
+          colima start
+          mkdir -p ~/.docker/cli-plugins
+          ln -sfn /usr/local/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+          colima start
+
       - name: Test Go build
         run: go build -o bin/anchor cmd/*.go
 
