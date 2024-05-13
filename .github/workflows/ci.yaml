@@ -123,10 +123,10 @@ jobs:
           colima start
 
       - name: Test Go build
-        run: go build -o bin/anchor cmd/*.go
+        run: go build -o bin/anchor cmd/main.go
 
       - name: Test Go run
-        run: go run cmd/*.go -y
+        run: go run cmd/main.go -y
 
       - name: Run Tests
         run: make test
