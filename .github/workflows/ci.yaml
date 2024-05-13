@@ -120,7 +120,7 @@ jobs:
         run: |
           brew install --HEAD colima
           brew install docker
-          colima start
+          colima start --arch x86_64
 
       - name: Test Go build
         run: go build -o bin/anchor cmd/main.go
