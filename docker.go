@@ -1,6 +1,7 @@
 package anchor
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -66,7 +67,7 @@ func PrintNode(node *parser.Node) {
 	}
 }
 
-func ParseNode(node *parser.Node, architecture string, image *string) error {
+func ParseNode(ctx context.Context, node *parser.Node, architecture string, image *string) error {
 	if node == nil {
 		return nil
 	}
@@ -79,16 +80,16 @@ func ParseNode(node *parser.Node, architecture string, image *string) error {
 		}
 		*image = newImage
 	} else if node.Value == "RUN" {
-		err := parseRunCommand(node.Next, architecture, *image)
+		err := parseRunCommand(ctx, node.Next, architecture, *image)
 		if err != nil {
 			return err
 		}
 	} else if node.Next != nil {
-		ParseNode(node.Next, architecture, image)
+		ParseNode(ctx, node.Next, architecture, image)
 	}
 
 	for _, child := range node.Children {
-		ParseNode(child, architecture, image)
+		ParseNode(ctx, child, architecture, image)
 	}
 	return nil
 }
