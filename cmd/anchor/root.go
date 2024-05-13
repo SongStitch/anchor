@@ -89,12 +89,25 @@ var rootCmd = &cobra.Command{
 		}
 		appendArch := len(options.Architectures) > 1
 
+		content, err := os.Open(options.InputFile)
+		if err != nil {
+			return err
+		}
+		defer content.Close()
+		lines := []string{}
+		scanner := bufio.NewScanner(content)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+
+		if err := scanner.Err(); err != nil {
+			return err
+		}
 		for _, architecture := range options.Architectures {
 			content, err := os.Open(options.InputFile)
 			if err != nil {
 				return err
 			}
-
 			defer content.Close()
 			result, err := parser.Parse(content)
 			if err != nil {
@@ -102,7 +115,6 @@ var rootCmd = &cobra.Command{
 			}
 
 			node := result.AST
-			anchor.PrintNode(node)
 
 			color.Cyan("Anchoring to architecture: %s\n", architecture)
 			image := ""
@@ -112,7 +124,7 @@ var rootCmd = &cobra.Command{
 			}
 
 			var builder strings.Builder
-			anchor.WriteDockerfile(&builder, node, true)
+			anchor.WriteDockerfile(&builder, node, true, 0, lines)
 			outputName := options.OutputFile
 			if appendArch {
 				outputName = fmt.Sprintf("%s.%s", outputName, architecture)
