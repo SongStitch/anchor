@@ -18,7 +18,16 @@ func fetchPackageVersions(
 	for _, pkg := range packages {
 		command += " " + pkg + ":" + architecture
 	}
-	c := exec.CommandContext(ctx, "docker", "run", "--rm", image, "bash", "-c", command) // #nosec G204
+	c := exec.CommandContext(
+		ctx,
+		"docker",
+		"run",
+		"--rm",
+		image,
+		"bash",
+		"-c",
+		command,
+	) // #nosec G204
 	c.Stdout = &stdoutBuf
 	c.Stderr = &stderrBuf // Use a buffer to capture stderr output
 
@@ -96,7 +105,12 @@ func parseCommand(command string) []string {
 	return packages
 }
 
-func parseRunCommand(ctx context.Context, node *parser.Node, architecture string, image string) error {
+func parseRunCommand(
+	ctx context.Context,
+	node *parser.Node,
+	architecture string,
+	image string,
+) error {
 	if node == nil {
 		return nil
 	}

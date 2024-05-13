@@ -3,7 +3,7 @@ BINARY_NAME=anchor
 LDFLAGS=-s -w
 
 # Package path where the version and commit variables are located
-PKG := anchor/cmd
+PKG := github.com/songstitch/anchor/cmd/anchor
 
 # Dynamically set version and commit using git
 VERSION := $(shell git describe --tags --abbrev=0)

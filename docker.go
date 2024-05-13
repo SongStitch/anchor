@@ -29,7 +29,13 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	return node.Value, nil
 }
 
-func WriteDockerfile(builder *strings.Builder, node *parser.Node, useOriginal bool, currentLine int, lines []string) int {
+func WriteDockerfile(
+	builder *strings.Builder,
+	node *parser.Node,
+	useOriginal bool,
+	currentLine int,
+	lines []string,
+) int {
 	// this allows us to maintain things like comments and newlines in the original Dockerfile
 	if currentLine != 0 && node.StartLine != 0 && currentLine < node.StartLine {
 		for i := currentLine + 1; i < node.StartLine; i++ {
