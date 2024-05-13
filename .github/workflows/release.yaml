@@ -1,0 +1,38 @@
+name: "Release"
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    name: "Release"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Go build all production binaries
+        run: |
+          git fetch --tags
+          make build-all-prod
+
+      - name: Create a GitHub Release
+        run: |
+          git fetch --tags
+          previous_release_tag=$(gh release list  --json tagName -L 1 --jq '.[0].tagName')
+          latest_tag="$(git describe --tags --abbrev=0)"
+          gh release create \
+            "${latest_tag}" \
+            --title "Release ${latest_tag}" \
+            --latest \
+            --generate-notes \
+            --notes-start-tag "${previous_release_tag}" \
+            bin/anchor_linux_amd64 \
+            bin/anchor_linux_arm64 \
+            bin/anchor_darwin_amd64 \
+            bin/anchor_darwin_arm64 \
+            bin/anchor_windows_amd64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

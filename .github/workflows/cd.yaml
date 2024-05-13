@@ -1,0 +1,25 @@
+name: "CD"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag:
+    name: Create a new tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_tag: ${{ steps.push-tag.outputs.new_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Push tag
+        id: push-tag
+        uses: anothrNick/github-tag-action@1.69.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch

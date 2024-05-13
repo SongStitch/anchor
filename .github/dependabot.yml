@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "Australia/Melbourne"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker:
+        patterns:
+          - "*"
+    labels:
+      - "docker"
+      - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "Australia/Melbourne"
+    groups:
+      github:
+        patterns:
+          - "*"
+    labels:
+      - "ci"
+      - "dependencies"
+
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "Australia/Melbourne"
+    groups:
+      go:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"

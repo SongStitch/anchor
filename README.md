@@ -1,3 +1,3 @@
 # Anchor
 
-A tool for anchoring depencencies in dockerfiles
+A tool for anchoring dependencies in dockerfiles
