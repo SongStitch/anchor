@@ -3,7 +3,7 @@ module github.com/songstitch/anchor
 go 1.22.1
 
 require (
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/google/go-containerregistry v0.19.1
 	github.com/moby/buildkit v0.13.2
 	github.com/spf13/cobra v1.8.0
