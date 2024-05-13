@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -29,7 +30,7 @@ func init() {
 	rootCmd.PersistentFlags().
 		StringP("output", "o", "Dockerfile", "Name of the output dockerfile. If using multiple architectures, the architecture will be appended to the output file name")
 	rootCmd.PersistentFlags().
-		StringP("architectures", "a", "arm64", "Comma delimited list of architectures to anchor")
+		StringP("architectures", "a", "", "Comma delimited list of architectures to anchor: \"amd64\" and \"arm64\" are supported. If the flag is not used, the system architecture will be used")
 	rootCmd.PersistentFlags().
 		BoolP("dry-run", "", false, "Write the output to stdout instead of a file")
 	rootCmd.PersistentFlags().
@@ -68,6 +69,12 @@ var rootCmd = &cobra.Command{
 		architectures, err := cmd.Flags().GetString("architectures")
 		if err != nil {
 			return err
+		}
+		if architectures == "" {
+			architectures, err = getArchitecture()
+			if err != nil {
+				return err
+			}
 		}
 		input, err := cmd.Flags().GetString("input")
 		if err != nil {
@@ -169,5 +176,16 @@ func Execute() {
 	if err != nil {
 		color.Red("%s", err)
 		os.Exit(1)
+	}
+}
+
+func getArchitecture() (string, error) {
+	switch runtime.GOARCH {
+	case "amd64":
+		return "amd64", nil
+	case "arm64":
+		return "arm64", nil
+	default:
+		return "unknown", fmt.Errorf("unsupported architecture: %s", runtime.GOARCH)
 	}
 }
