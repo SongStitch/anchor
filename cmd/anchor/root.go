@@ -2,10 +2,13 @@ package anchor
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/fatih/color"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -41,6 +44,14 @@ var rootCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithCancel(context.Background())
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			cancel()
+			os.Exit(1)
+		}()
 
 		if anchor.IsDockerInstalled() {
 			if !anchor.IsDockerRunning() {
@@ -95,7 +106,7 @@ var rootCmd = &cobra.Command{
 
 			color.Cyan("Anchoring to architecture: %s\n", architecture)
 			image := ""
-			err = anchor.ParseNode(node, architecture, &image)
+			err = anchor.ParseNode(ctx, node, architecture, &image)
 			if err != nil {
 				return err
 			}
