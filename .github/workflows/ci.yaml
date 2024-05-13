@@ -118,7 +118,9 @@ jobs:
       - name: Setup docker (missing on MacOS)
         if: runner.os == 'macos'
         run: |
+          brew install --HEAD colima
           brew install docker
+          colima start
 
       - name: Test Go build
         run: go build -o bin/anchor cmd/*.go
