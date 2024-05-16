@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
@@ -48,6 +49,8 @@ func fetchPackageVersions(
 func parsePackageVersions(s string) (map[string]string, error) {
 	versions := make(map[string]string)
 	currentPackage := ""
+	color.Blue("\tParsing package versions...")
+
 	for _, line := range strings.Split(s, "\n") {
 		if strings.HasPrefix(line, "Package:") {
 			currentPackage = strings.Split(line, ": ")[1]
@@ -59,7 +62,7 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
 			fmt.Printf(
-				"\tAnchored %s to %s\n",
+				"\t⚓Anchored %s to %s\n",
 				currentPackage,
 				versions[currentPackage],
 			)
