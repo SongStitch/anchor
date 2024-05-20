@@ -37,7 +37,7 @@ func WriteDockerfile(
 	lines []string,
 ) int {
 	// this allows us to maintain things like comments and newlines in the original Dockerfile
-	if currentLine != 0 && node.StartLine != 0 && currentLine < node.StartLine {
+	if node.StartLine != 0 && currentLine < node.StartLine {
 		for i := currentLine + 1; i < node.StartLine; i++ {
 			builder.WriteString(lines[i-1])
 			builder.WriteString("\n")
