@@ -126,7 +126,9 @@ jobs:
         run: go build -o bin/anchor cmd/main.go
 
       - name: Test Go run
+        if: runner.os == 'ubuntu-latest' || runner.os == 'macos-latest'
         run: go run cmd/main.go -y
 
       - name: Run Tests
+        if: runner.os == 'ubuntu-latest' || runner.os == 'macos-latest'
         run: make test

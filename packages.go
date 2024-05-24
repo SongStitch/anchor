@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -34,7 +35,7 @@ func fetchPackageVersions(
 
 	if err := c.Run(); err != nil {
 		// Log stderr or handle it as needed
-		fmt.Printf("Error running command: %s\n", stderrBuf.String())
+		fmt.Fprintf(os.Stderr, "error running command: %s\n", stderrBuf.String())
 		return nil, fmt.Errorf("failed to run command: %w", err)
 	}
 
