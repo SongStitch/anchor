@@ -90,7 +90,12 @@ jobs:
 
       - name: Run golines
         run: |
-          golines --write-output --ignored-dirs=vendor .
+          files=$(golines --ignored-dirs=vendor . --list-files)
+          if [ -n "${files}" ]; then
+            echo "The following files need reformatting:"
+            echo "${files}"
+            exit 1
+          fi
 
   gosec:
     name: gosec
