@@ -94,11 +94,17 @@ func ParseNode(ctx context.Context, node *parser.Node, architecture string, imag
 			return err
 		}
 	} else if node.Next != nil {
-		ParseNode(ctx, node.Next, architecture, image)
+		err := ParseNode(ctx, node.Next, architecture, image)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, child := range node.Children {
-		ParseNode(ctx, child, architecture, image)
+		err := ParseNode(ctx, child, architecture, image)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
