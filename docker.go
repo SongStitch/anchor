@@ -15,7 +15,7 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	if node.Next != nil && strings.ToLower(node.Next.Value) == "as" {
 		color.Blue("Parsing %s image...", node.Next.Next.Value)
 	} else {
-		color.Blue("Parsing the final image")
+		color.Blue("Parsing the final image...")
 	}
 	if node == nil {
 		return "", nil
@@ -24,7 +24,7 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	if err != nil {
 		return digest, err
 	}
-	fmt.Printf("\tAnchored %s to %s\n", node.Value, digest)
+	fmt.Printf("\t⚓Anchored %s to %s\n", node.Value, digest)
 	node.Value = fmt.Sprintf("%s@%s", node.Value, digest)
 	return node.Value, nil
 }
@@ -37,7 +37,7 @@ func WriteDockerfile(
 	lines []string,
 ) int {
 	// this allows us to maintain things like comments and newlines in the original Dockerfile
-	if currentLine != 0 && node.StartLine != 0 && currentLine < node.StartLine {
+	if node.StartLine != 0 && currentLine < node.StartLine {
 		for i := currentLine + 1; i < node.StartLine; i++ {
 			builder.WriteString(lines[i-1])
 			builder.WriteString("\n")
@@ -94,11 +94,17 @@ func ParseNode(ctx context.Context, node *parser.Node, architecture string, imag
 			return err
 		}
 	} else if node.Next != nil {
-		ParseNode(ctx, node.Next, architecture, image)
+		err := ParseNode(ctx, node.Next, architecture, image)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, child := range node.Children {
-		ParseNode(ctx, child, architecture, image)
+		err := ParseNode(ctx, child, architecture, image)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

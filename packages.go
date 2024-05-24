@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
@@ -33,7 +35,7 @@ func fetchPackageVersions(
 
 	if err := c.Run(); err != nil {
 		// Log stderr or handle it as needed
-		fmt.Printf("Error running command: %s\n", stderrBuf.String())
+		fmt.Fprintf(os.Stderr, "error running command: %s\n", stderrBuf.String())
 		return nil, fmt.Errorf("failed to run command: %w", err)
 	}
 
@@ -48,6 +50,8 @@ func fetchPackageVersions(
 func parsePackageVersions(s string) (map[string]string, error) {
 	versions := make(map[string]string)
 	currentPackage := ""
+	color.Blue("\tParsing package versions...")
+
 	for _, line := range strings.Split(s, "\n") {
 		if strings.HasPrefix(line, "Package:") {
 			currentPackage = strings.Split(line, ": ")[1]
@@ -59,7 +63,7 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
 			fmt.Printf(
-				"\tAnchored %s to %s\n",
+				"\t⚓Anchored %s to %s\n",
 				currentPackage,
 				versions[currentPackage],
 			)
