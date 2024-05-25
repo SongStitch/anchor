@@ -70,7 +70,7 @@ gosec: ## Runs gosec on the codebase
 
 format-go: ## Runs go-fmt on the codebase
 	@printf "%s\n" "==== Running go-fmt ====="
-	gofmt -s -w *.go cmd/*.go
+	gofmt -s -w . 
 
 golines-format: ## Runs golines on the codebase
 	# https://github.com/segmentio/golines
@@ -86,51 +86,51 @@ go-staticcheck: ## Runs staticcheck on the codebase
 	staticcheck ./...
 
 run: ## Runs the binary
-	go run cmd/*.go $(ARGS)
+	go run main.go $(ARGS)
 
 test: ## Runs the tests
 	go test -v .
 
 build: format-lint ## Builds the binary for your current platform
-	go build -o bin/${BINARY_NAME} cmd/*.go
+	go build -o bin/${BINARY_NAME} main.go
 
 build-prod: format-lint ## Builds the binary for your current platform with production flags
-	go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME} cmd/*.go
+	go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME} main.go
 
 build-darwin: format-lint ## Builds the binary for darwin
 	@printf "%s\n" "==== Building for Darwin ====="
-	env GOOS=darwin GOARCH=arm64 go build -o bin/${BINARY_NAME}_darwin_arm64 cmd/*.go
-	env GOOS=darwin GOARCH=amd64 go build -o bin/${BINARY_NAME}_darwin_amd64 cmd/*.go
+	env GOOS=darwin GOARCH=arm64 go build -o bin/${BINARY_NAME}_darwin_arm64 main.go
+	env GOOS=darwin GOARCH=amd64 go build -o bin/${BINARY_NAME}_darwin_amd64 main.go
 	lipo -create -output bin/${BINARY_NAME}_darwin bin/${BINARY_NAME}_darwin_arm64 bin/${BINARY_NAME}_darwin_amd64
 
 build-darwin-prod: ## Builds the binary for darwin with production flags
 	@printf "%s\n" "==== Building for Darwin (Production) ====="
-	env GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_darwin_arm64 cmd/*.go
-	env GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_darwin_amd64 cmd/*.go
+	env GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_darwin_arm64 main.go
+	env GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_darwin_amd64 main.go
 
 build-linux-arm64: format-lint ## Builds the binary for linux arm64
 	@printf "%s\n" "==== Building for linux arm64 ====="
-	env GOOS=linux GOARCH=arm64 go build -o bin/${BINARY_NAME}_linux_arm64 cmd/*.go
+	env GOOS=linux GOARCH=arm64 go build -o bin/${BINARY_NAME}_linux_arm64 main.go
 
 build-linux-arm64-prod: ## Builds the binary for linux arm64 with production flags
 	@printf "%s\n" "==== Building for linux arm64 (Production) ====="
-	env GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_linux_arm64 cmd/*.go
+	env GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_linux_arm64 main.go
 
 build-linux-amd64: format-lint ## Builds the binary for linux amd64
 	@printf "%s\n" "==== Building for linux amd64 ====="
-	env GOOS=linux GOARCH=amd64 go build -o bin/${BINARY_NAME}_linux_amd64 cmd/*.go
+	env GOOS=linux GOARCH=amd64 go build -o bin/${BINARY_NAME}_linux_amd64 main.go
 
 build-linux-amd64-prod: ## Builds the binary for linux amd64 with production flags
 	@printf "%s\n" "==== Building for linux amd64 (Production) ====="
-	env GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_linux_amd64 cmd/*.go
+	env GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_linux_amd64 main.go
 
 build-windows-amd64: format-lint ## Builds the binary for windows amd64
 	@printf "%s\n" "==== Building for windows amd64 ====="
-	env GOOS=windows GOARCH=amd64 go build -o bin/${BINARY_NAME}_windows_amd64 cmd/*.go
+	env GOOS=windows GOARCH=amd64 go build -o bin/${BINARY_NAME}_windows_amd64 main.go
 
 build-windows-amd64-prod: ## Builds the binary for windows amd64 with production flags
 	@printf "%s\n" "==== Building for windows amd64 (Production) ====="
-	env GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_windows_amd64 cmd/*.go
+	env GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o bin/${BINARY_NAME}_windows_amd64 main.go
 
 build-all: build-darwin build-linux-arm64 build-linux-amd64 build-windows-amd64 ## Builds the binary for all platforms
 
