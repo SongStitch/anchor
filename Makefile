@@ -47,7 +47,7 @@ markdown-toc: ## Generates the MarkDown TOC and writes it to README.md
 	markdown-toc -i README.md
 	prettier -w README.md --log-level=error
 
-lint: hadolint prettier-lint shellcheck typos go-staticcheck gosec ## Runs all the linters
+lint: hadolint prettier-lint shellcheck typos go-vet go-staticcheck gosec ## Runs all the linters
 
 format: prettier-format format-go golines-format ## Runs all the formatters
 
@@ -76,6 +76,10 @@ golines-format: ## Runs golines on the codebase
 	# https://github.com/segmentio/golines
 	@printf "%s\n" "==== Run golines ====="
 	golines --write-output --ignored-dirs=vendor .
+
+go-vet: ## Runs go vet on the codebase
+	@printf "%s\n" "==== Running go vet ====="
+	go vet ./...
 
 go-staticcheck: ## Runs staticcheck on the codebase
 	# https://github.com/dominikh/go-tools
