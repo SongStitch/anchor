@@ -50,10 +50,9 @@ Note that `docker` must be installed and running on the system for `anchor` to w
 Given this dockerfile
 
 ```dockerfile
-# This comment should be preserved
+# Comments are preserved
 FROM golang:1.22-bookworm as builder
 
-# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --no-install-recommends -y curl wget \
     && rm -rf /var/lib/apt/lists/* \
@@ -63,10 +62,9 @@ RUN apt-get update \
 Running `anchor` will generate the following `Dockerfile`
 
 ```dockerfile
-# This comment should be preserved
+# Comments are preserved
 FROM golang:1.22-bookworm@sha256:5c56bd47228dd572d8a82971cf1f946cd8bb1862a8ec6dc9f3d387cc94136976 as builder
 
-# hadolint ignore=DL3008
 RUN apt-get update \
     && dpkg --add-architecture arm64 && apt-get update && \
     apt-get install --no-install-recommends -y curl:arm64=7.88.1-10+deb12u5 wget:arm64=1.21.3-1+b1 \
