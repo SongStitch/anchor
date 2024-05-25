@@ -47,7 +47,7 @@ Note that `docker` must be installed and running on the system for `anchor` to w
 
 ## By Example
 
-Given this dockerfile
+Given this `Dockerfile`
 
 ```dockerfile
 # Comments are preserved
