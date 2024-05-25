@@ -132,11 +132,11 @@ jobs:
           colima start --arch x86_64
 
       - name: Test Go build
-        run: go build -o bin/anchor cmd/main.go
+        run: go build -o bin/anchor main.go
 
       - name: Test Go run
         if: runner.os == 'ubuntu-latest' || runner.os == 'macos-latest'
-        run: go run cmd/main.go -y
+        run: go run main.go -y
 
       - name: Run Tests
         if: runner.os == 'ubuntu-latest' || runner.os == 'macos-latest'

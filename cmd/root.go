@@ -1,4 +1,4 @@
-package anchor
+package cmd
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/spf13/cobra"
 
-	"github.com/songstitch/anchor"
+	"github.com/songstitch/anchor/pkg/anchor"
 )
 
 type Options struct {
