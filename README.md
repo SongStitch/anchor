@@ -15,6 +15,8 @@ A tool for anchoring dependencies in dockerfiles
 <!-- toc -->
 
 - [Installation](#installation)
+  - [Via Go Install](#via-go-install)
+  - [Via GitHub Releases](#via-github-releases)
 - [What is Anchor, and How Does it Work?](#what-is-anchor-and-how-does-it-work)
   - [By Example](#by-example)
 - [Supported Operating Systems Package Managers](#supported-operating-systems-package-managers)
@@ -30,9 +32,15 @@ A tool for anchoring dependencies in dockerfiles
 
 # Installation
 
+## Via Go Install
+
 ```shell
 go install github.com/songstitch/anchor@latest
 ```
+
+## Via GitHub Releases
+
+Download the latest binary from the [releases page](https://github.com/SongStitch/anchor/releases/latest)
 
 # What is Anchor, and How Does it Work?
 
