@@ -70,7 +70,9 @@ func WriteDockerfile(
 	}
 
 	if node.Next != nil {
-		builder.WriteString(" ")
+		if !useOriginal {
+			builder.WriteString(" ")
+		}
 		currentLine = WriteDockerfile(builder, node.Next, useOriginal, currentLine, lines)
 	}
 	return currentLine
