@@ -49,7 +49,7 @@ Anchor is a tool for anchoring Dockerfiles (not unlike pinning in lock files). I
 - Replacing docker image tags referenced in a Dockerfile with the digest of the image
 - Replacing package versions in a Dockerfile with the version of the package. The parent digest image is used resolve the package versions to ensure that the package versions are consistent with the parent image.
 
-Anchor is designed that with the generated `Dockerfile`, no changes are needed on one's CI or build process.
+Anchor has been designed such that with the generated `Dockerfile`, no changes are needed on one's CI or build process.
 
 Note that `docker` must be installed and running on the system for `anchor` to work.
 
