@@ -1,0 +1,40 @@
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+builds:
+  - binary: anchor
+    env:
+      - CGO_ENABLED=0
+      - VERSION={{.Env.VERSION}}
+      - COMMIT={{.Env.COMMIT}}
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -mod=vendor
+    ldflags:
+      - -s -w
+      - -X github.com/songstitch/anchor/cmd.version={{.Env.VERSION}}
+      - -X github.com/songstitch/anchor/cmd.commit={{.Env.COMMIT}}
+universal_binaries:
+  - replace: true
+brews:
+  - name: anchor
+    homepage: "https://github.com/SongStitch/anchor"
+    tap:
+      owner: SongStitch
+      name: homebrew-anchor
+    commit_author:
+      name: anchor
+      email: anchor@theden.sh
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+checksum:
+  name_template: "checksums.txt"

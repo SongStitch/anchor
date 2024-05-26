@@ -1,4 +1,4 @@
-package anchor
+package cmd
 
 import (
 	"bufio"
@@ -15,13 +15,23 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/spf13/cobra"
 
-	"github.com/songstitch/anchor"
+	"github.com/songstitch/anchor/pkg/anchor"
 )
 
 type Options struct {
 	Architectures []string
 	OutputFile    string
 	InputFile     string
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() error {
+	err := rootCmd.Execute()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func init() {
@@ -169,14 +179,6 @@ var rootCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		color.Red("%s", err)
-		os.Exit(1)
-	}
 }
 
 func getArchitecture() (string, error) {

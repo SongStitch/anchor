@@ -1,4 +1,4 @@
-package anchor
+package cmd
 
 import (
 	"fmt"
