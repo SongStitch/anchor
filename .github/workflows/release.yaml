@@ -17,7 +17,7 @@ jobs:
 
       - name: Go build all production binaries
         run: |
-          git fetch --tags
+          git fetch --force --tags
           make build-all-prod
 
       - name: Create a GitHub Release
