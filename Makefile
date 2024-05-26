@@ -70,7 +70,7 @@ gosec: ## Runs gosec on the codebase
 
 format-go: ## Runs go-fmt on the codebase
 	@printf "%s\n" "==== Running go-fmt ====="
-	gofmt -s -w . 
+	gofmt -s -w  *.go cmd/ pkg/ 
 
 golines-format: ## Runs golines on the codebase
 	# https://github.com/segmentio/golines
