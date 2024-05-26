@@ -44,12 +44,12 @@ Download the latest binary from the [releases page](https://github.com/SongStitc
 
 # What is Anchor, and How Does it Work?
 
-Anchor is a tool for anchoring (or pinning) Dockerfiles. It allows for reproducible builds by ensuring that the versions of dependencies are fixed. This is done in two ways
+Anchor is a tool for anchoring Dockerfiles (not unlike pinning in lock files). It allows for reproducible builds by ensuring that the versions of dependencies are fixed. This is done in two ways
 
 - Replacing docker image tags referenced in a Dockerfile with the digest of the image
 - Replacing package versions in a Dockerfile with the version of the package. The parent digest image is used resolve the package versions to ensure that the package versions are consistent with the parent image.
 
-Anchor is designed to be a drop-in tool that can be used against existing Dockerfiles without the need to modify them.
+Anchor is designed that with the generated `Dockerfile`, no changes are needed on one's CI or build process.
 
 Note that `docker` must be installed and running on the system for `anchor` to work.
 
