@@ -15,6 +15,7 @@ A tool for anchoring dependencies in dockerfiles
 <!-- toc -->
 
 - [Installation](#installation)
+  - [Via Homebrew](#via-homebrew)
   - [Via Go Install](#via-go-install)
   - [Via GitHub Releases](#via-github-releases)
 - [What is Anchor, and How Does it Work?](#what-is-anchor-and-how-does-it-work)
@@ -31,6 +32,13 @@ A tool for anchoring dependencies in dockerfiles
 <!-- tocstop -->
 
 # Installation
+
+## Via Homebrew
+
+```shell
+brew tap songstitch/anchor
+brew install anchor
+```
 
 ## Via Go Install
 
