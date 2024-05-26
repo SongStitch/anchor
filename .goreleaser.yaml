@@ -2,12 +2,12 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
-    - VERSION=$(git describe --tags --abbrev=0)
-
 builds:
   - binary: anchor
     env:
       - CGO_ENABLED=0
+      - VERSION={{.Env.VERSION}}
+      - COMMIT={{.Env.COMMIT}}
     goos:
       - darwin
     goarch:
@@ -15,8 +15,8 @@ builds:
       - arm64
     flags:
       - -mod=vendor
-      - -X $(PKG).version=$(VERSION)
-      - -X $(PKG).commit=$(COMMIT)
+      - -X github.com/songstitch/anchor/cmd.version={{.Env.VERSION}}
+      - -X github.com/songstitch/anchor/cmd.commit={{.Env.COMMIT}}
 universal_binaries:
   - replace: true
 brews:
