@@ -1,7 +1,23 @@
 package main
 
-import "github.com/songstitch/anchor/cmd"
+import (
+	"os"
+
+	"github.com/fatih/color"
+	"github.com/songstitch/anchor/cmd"
+)
+
+func run() error {
+	err := cmd.Execute()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func main() {
-	cmd.Execute()
+	if err := run(); err != nil {
+		color.Red("%s", err)
+		os.Exit(1)
+	}
 }

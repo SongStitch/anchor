@@ -39,6 +39,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get the latest tag
+        id: get_version
+        run: |
+          echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
       - uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
@@ -46,3 +52,5 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          VERSION: ${{ env.VERSION }}
+          COMMIT: ${{ env.COMMIT }}
