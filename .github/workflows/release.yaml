@@ -2,16 +2,18 @@ name: "Release"
 
 on: workflow_dispatch
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     name: "Release"
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
+      - id: setup-go
+        uses: ./.github/actions/setup-go
 
       - name: Go build all production binaries
         run: |
@@ -36,3 +38,11 @@ jobs:
             bin/anchor_windows_amd64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
