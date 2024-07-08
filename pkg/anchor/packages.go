@@ -21,14 +21,7 @@ func fetchPackageVersions(
 		command += " " + pkg + ":" + architecture
 	}
 	c := exec.CommandContext(
-		ctx,
-		"docker",
-		"run",
-		"--rm",
-		image,
-		"bash",
-		"-c",
-		command,
+		ctx, "docker", "run", "--rm", image, "bash", "-c", command,
 	) // #nosec G204
 	c.Stdout = &stdoutBuf
 	c.Stderr = &stderrBuf // Use a buffer to capture stderr output

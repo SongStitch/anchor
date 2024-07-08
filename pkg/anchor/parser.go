@@ -3,83 +3,103 @@ package anchor
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"unicode"
 )
 
-type command string
+type commandType int
 
 const (
-	CommandFrom command = "FROM"
-	CommandRun  command = "RUN"
+	CommandFrom commandType = iota
+	CommandRun
+	CommandOther
 )
 
-var utf8bom = []byte{0xEF, 0xBB, 0xBF}
-
 type Node struct {
-	startLine     int
-	endLine       int
-	value         string
-	comments      []string
-	dockerCommand string
+	startLine   int
+	endLine     int
+	value       []byte
+	comments    []string
+	CommandType commandType
+	Command     string
 }
 
 func (n Node) Write(w io.Writer) {
 	w.Write([]byte(n.value))
 }
 
+func (n *Node) appendLine(line []byte) {
+	n.value = append(n.value, line...)
+	n.value = append(n.value, '\n')
+}
+
+func (n *Node) appendComment(line []byte) {
+	n.comments = append(n.comments, string(line))
+}
+
+func (n *Node) appendCommand(command []byte) {
+	trimmed := bytes.TrimLeftFunc(command, func(r rune) bool {
+		return r == '\\'
+	})
+	n.Command += string(trimmed)
+}
+
 func Parse(r io.Reader) ([]Node, error) {
 	scanner := bufio.NewScanner(r)
 	currentLine := 0
-	currentNode := Node{startLine: 0}
+	node := Node{startLine: 0}
 	nodes := make([]Node, 0)
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		if currentLine == 0 {
-			line = bytes.TrimPrefix(line, utf8bom)
-		}
 
 		if isComment(line) {
-			currentNode.value += string(line)
-			currentNode.comments = append(currentNode.comments, string(line))
+			node.appendLine(line)
+			node.appendComment(line)
 			currentLine++
 			continue
 		}
 
 		if isWhitespace(line) {
-			currentNode.value += string(line)
+			node.appendLine(line)
 			currentLine++
 			continue
 		}
 
-		currentNode.value += string(line)
+		node.appendLine(line)
+		node.appendCommand(line)
 		if bytes.HasPrefix(line, []byte("FROM")) {
-			currentNode.dockerCommand = "FROM"
+			node.CommandType = CommandFrom
 		} else if bytes.HasPrefix(line, []byte("RUN")) {
-			currentNode.dockerCommand = "RUN"
+			node.CommandType = CommandRun
+		} else {
+			node.CommandType = CommandOther
 		}
 
 		isEndOfLine := isEndOfSection(line)
 		for !isEndOfLine && scanner.Scan() {
 			nextLine := scanner.Bytes()
 			if isWhitespace(nextLine) {
-				currentNode.value += string(nextLine)
+				node.appendLine(nextLine)
 				currentLine++
 				continue
 			}
-			currentNode.value += string(nextLine)
+			if isComment(nextLine) {
+				node.appendLine(nextLine)
+				currentLine++
+				continue
+			}
+			node.appendLine(nextLine)
+			node.appendCommand(nextLine)
 
 			isEndOfLine = isEndOfSection(nextLine)
 			currentLine++
 		}
 
-		currentNode.endLine = currentLine
-		nodes = append(nodes, currentNode)
+		node.endLine = currentLine
+		nodes = append(nodes, node)
 		currentLine++
-		currentNode = Node{startLine: currentLine}
+		node = Node{startLine: currentLine}
 	}
-	fmt.Println(nodes)
 	return nodes, nil
 }
 
@@ -88,8 +108,10 @@ func isWhitespace(line []byte) bool {
 }
 
 func isEndOfSection(line []byte) bool {
-	fmt.Println(string(line))
 	trimmed := bytes.TrimRightFunc(line, unicode.IsSpace)
+	if len(trimmed) == 0 {
+		return false
+	}
 	return trimmed[len(trimmed)-1] != '\\'
 }
 
