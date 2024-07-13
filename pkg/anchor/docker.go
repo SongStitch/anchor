@@ -29,6 +29,39 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	return node.Value, nil
 }
 
+func attachDockerSha2(node *Node) error {
+	if node.CommandType != CommandFrom {
+		return fmt.Errorf("Node is not a FROM command")
+	}
+	nextComment := node.NextCommentIndex()
+	for i := range node.Entries {
+		if i == nextComment {
+			nextComment = node.NextCommentIndex()
+			continue
+		}
+		entry := node.Entries[i]
+
+		commandSplit := strings.Split(entry, " ")
+		if len(commandSplit) < 2 {
+			return fmt.Errorf("FROM command is missing image name")
+		}
+
+		image := commandSplit[1]
+		image = strings.TrimSpace(image)
+		digest, err := crane.Digest(image)
+		if err != nil {
+			return err
+		}
+
+		entry = strings.Replace(entry, image, fmt.Sprintf("%s@%s", image, digest), 1)
+		node.Entries[i] = entry
+		fmt.Printf("\t⚓Anchored %s to %s\n", image, digest)
+		// FROM command can only be one line, exit here
+		return nil
+	}
+	return fmt.Errorf("Node did not contain a FROM command")
+}
+
 func WriteDockerfile(
 	builder *strings.Builder,
 	node *parser.Node,
@@ -127,4 +160,16 @@ func IsDockerRunning() bool {
 	}
 	// Check if output contains information indicating Docker is running
 	return strings.Contains(string(output), "Server:")
+}
+
+func Process(nodes []Node, architecture string) error {
+	for _, node := range nodes {
+		if node.CommandType == CommandFrom {
+			err := attachDockerSha2(&node)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
