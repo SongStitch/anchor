@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -67,36 +68,41 @@ func parsePackageVersions(s string) (map[string]string, error) {
 }
 
 func parseCommand(command string) []string {
-	components := strings.Split(command, " ")
-	var stripped []string
-	for _, part := range components {
-		if part == "" {
+	commands := strings.Split(command, "&&")
+	packages := []string{}
+	for _, c := range commands {
+		components := strings.Split(c, " ")
+		var stripped []string
+		for _, part := range components {
+			if part == "" {
+				continue
+			}
+			if !strings.HasPrefix(part, "-") {
+				stripped = append(stripped, part)
+			}
+		}
+		if len(stripped) < 3 {
 			continue
 		}
-		if !strings.HasPrefix(part, "-") {
-			stripped = append(stripped, part)
-		}
-	}
-	if len(stripped) < 3 {
-		return []string{}
-	}
-	var packages []string
-	for i, part := range stripped {
-		if i == 0 {
-			if part != "apt-get" {
-				return []string{}
-			} else {
-				continue
+		for i, part := range stripped {
+			if i == 0 {
+				if part != "apt-get" {
+					break
+				} else {
+					continue
+				}
+			}
+			if i == 1 {
+				if part != "install" {
+					break
+				} else {
+					continue
+				}
+			}
+			if !slices.Contains(packages, part) {
+				packages = append(packages, part)
 			}
 		}
-		if i == 1 {
-			if part != "install" {
-				return []string{}
-			} else {
-				continue
-			}
-		}
-		packages = append(packages, part)
 	}
 
 	return packages

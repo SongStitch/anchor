@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"unicode"
 )
 
@@ -34,6 +35,7 @@ type Nodes []Node
 type Node struct {
 	Entries     []Entry
 	CommandType commandType
+	Command     string
 }
 
 func (n Nodes) Print() {
@@ -52,7 +54,15 @@ func (n Node) Write(w io.Writer) {
 	w.Write(b)
 }
 
-func (n *Node) appendLine(line []byte, entryType EntryType) {
+func (n *Node) appendLine(line []byte, entryType EntryType, strip ...string) {
+	if entryType == EntryCommand {
+		l := string(line)
+		for _, s := range strip {
+			l = strings.TrimLeft(l, s)
+      l = strings.TrimSpace(l)
+		}
+		n.Command += l
+	}
 	// new lines are trimmed by the scanner so we re-add them here
 	line = append(line, '\n')
 	n.Entries = append(n.Entries, Entry{Type: entryType, Value: string(line)})
@@ -75,12 +85,14 @@ func Parse(r io.Reader) (Nodes, error) {
 			continue
 		}
 
-		node.appendLine(line, EntryCommand)
 		if bytes.HasPrefix(line, []byte("FROM")) {
+			node.appendLine(line, EntryCommand)
 			node.CommandType = CommandFrom
 		} else if bytes.HasPrefix(line, []byte("RUN")) {
+			node.appendLine(line, EntryCommand, "RUN")
 			node.CommandType = CommandRun
 		} else {
+			node.appendLine(line, EntryCommand)
 			node.CommandType = CommandOther
 		}
 

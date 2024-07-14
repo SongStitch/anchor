@@ -29,9 +29,9 @@ func attachDockerSha(node *parser.Node) (string, error) {
 	return node.Value, nil
 }
 
-func attachDockerSha2(node *Node) error {
+func processFromCommand(node *Node) (string, error) {
 	if node.CommandType != CommandFrom {
-		return fmt.Errorf("Node is not a FROM command")
+		return "", fmt.Errorf("Node is not a FROM command")
 	}
 	for i := range node.Entries {
 		entry := node.Entries[i]
@@ -41,7 +41,7 @@ func attachDockerSha2(node *Node) error {
 
 		commandSplit := strings.Split(entry.Value, " ")
 		if len(commandSplit) < 2 {
-			return fmt.Errorf("FROM command is missing image name")
+			return "", fmt.Errorf("FROM command is missing image name")
 		}
 
 		if len(commandSplit) == 4 {
@@ -54,16 +54,16 @@ func attachDockerSha2(node *Node) error {
 		image = strings.TrimSpace((image))
 		digest, err := crane.Digest(image)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		entry.Value = strings.Replace((entry.Value), image, fmt.Sprintf("%s@%s", image, digest), 1)
 		node.Entries[i] = entry
 		fmt.Printf("\t⚓Anchored %s to %s\n", image, digest)
 		// FROM command can only be one line, exit here
-		return nil
+		return image, nil
 	}
-	return fmt.Errorf("Node did not contain a FROM command")
+	return "", fmt.Errorf("Node did not contain a FROM command")
 }
 
 func WriteDockerfile(
@@ -166,10 +166,51 @@ func IsDockerRunning() bool {
 	return strings.Contains(string(output), "Server:")
 }
 
-func Process(nodes []Node, architecture string) error {
+func processRunCommand(ctx context.Context, node *Node, architecture string, image string) error {
+	if node.CommandType != CommandRun {
+		return fmt.Errorf("Node is not a RUN command")
+	}
+
+	packageNames := parseCommand(node.Command)
+	if len(packageNames) == 0 {
+		return nil
+	}
+	packageMap, err := fetchPackageVersions(ctx, packageNames, architecture, image)
+	if err != nil {
+		return err
+	}
+
+	for i := range node.Entries {
+		entry := node.Entries[i]
+		if entry.Type != EntryCommand {
+			continue
+		}
+
+		elements := strings.Split(entry.Value, " ")
+		for j := range elements {
+			if _, ok := packageMap[elements[j]]; ok {
+				elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+			}
+		}
+		entry.Value = strings.Join(elements, " ")
+		node.Entries[i] = entry
+	}
+
+	return nil
+}
+
+func Process(ctx context.Context, nodes []Node, architecture string) error {
+	image := ""
+	var err error
 	for _, node := range nodes {
-		if node.CommandType == CommandFrom {
-			err := attachDockerSha2(&node)
+		switch node.CommandType {
+		case CommandFrom:
+			image, err = processFromCommand(&node)
+			if err != nil {
+				return err
+			}
+		case CommandRun:
+			err := processRunCommand(ctx, &node, architecture, image)
 			if err != nil {
 				return err
 			}
