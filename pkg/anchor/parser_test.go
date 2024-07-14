@@ -143,7 +143,12 @@ RUN apt-get update \
 			input := strings.NewReader(tc.input)
 			result := Parse(input)
 			if len(result) != len(tc.expected) {
-				t.Fatalf("%s: Different lengths, expected:\n%v\n got:\n%v", tc.name, tc.expected, result)
+				t.Fatalf(
+					"%s: Different lengths, expected:\n%v\n got:\n%v",
+					tc.name,
+					tc.expected,
+					result,
+				)
 			}
 			for i := range result {
 				if tc.expected[i].Command != result[i].Command {

@@ -56,8 +56,8 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			}
 
 			if _, ok := versions[currentPackage]; ok {
-        // We have already seen this package, so we can skip it
-        currentPackage = ""
+				// We have already seen this package, so we can skip it
+				currentPackage = ""
 				continue
 			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
