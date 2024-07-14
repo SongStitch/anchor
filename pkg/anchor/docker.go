@@ -106,7 +106,7 @@ func appendPackageVersions(node *Node, packageMap map[string]string, architectur
 					elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
 				}
 			}
-			if strings.TrimSpace(elements[i]) == "&&" {
+			if strings.TrimSpace(elements[j]) == "&&" {
 				aptGet = false
 				install = false
 			}

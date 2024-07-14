@@ -54,6 +54,12 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			if currentPackage == "" {
 				return nil, fmt.Errorf("version found before package, offending line: %s", line)
 			}
+
+			if _, ok := versions[currentPackage]; ok {
+        // We have already seen this package, so we can skip it
+        currentPackage = ""
+				continue
+			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
 			fmt.Printf(
 				"\t⚓Anchored %s to %s\n",
@@ -73,7 +79,11 @@ func parseCommand(command string) []string {
 		components := strings.Split(c, " ")
 		var stripped []string
 		for _, part := range components {
+			part = strings.TrimSpace(part)
 			if part == "" {
+				continue
+			}
+			if part == "\\" {
 				continue
 			}
 			if !strings.HasPrefix(part, "-") {
