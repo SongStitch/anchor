@@ -3,8 +3,8 @@ package anchor
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
-	"strings"
 	"unicode"
 )
 
@@ -16,76 +16,66 @@ const (
 	CommandOther
 )
 
-type Node struct {
-	startLine        int
-	endLine          int
-	Entries          []string
-	commentIndexes   []int
-	CommandType      commandType
-	Command          string
-	nextCommentIndex int
+type EntryType int
+
+const (
+	EntryCommand EntryType = iota
+	EntryComment
+	EntryEmpty
+)
+
+type Entry struct {
+	Type  EntryType
+	Value string
 }
 
-func (n Node) NextCommentIndex() int {
-	if len(n.commentIndexes) < n.nextCommentIndex+1 {
-		return -1
+type Nodes []Node
+
+type Node struct {
+	Entries     []Entry
+	CommandType commandType
+}
+
+func (n Nodes) Print() {
+	for _, node := range n {
+		for _, entry := range node.Entries {
+			fmt.Println(entry.Value)
+		}
 	}
-	n.nextCommentIndex += 1
-	return n.commentIndexes[n.nextCommentIndex-1]
 }
 
 func (n Node) Write(w io.Writer) {
-	w.Write([]byte(strings.Join(n.Entries, "")))
+	b := []byte{}
+	for _, entry := range n.Entries {
+		b = append(b, []byte(entry.Value)...)
+	}
+	w.Write(b)
 }
 
-func (n *Node) appendLine(line []byte, lineNumber int) {
+func (n *Node) appendLine(line []byte, entryType EntryType) {
+	// new lines are trimmed by the scanner so we re-add them here
 	line = append(line, '\n')
-	n.Entries = append(n.Entries, string(line))
-	if n.startLine == -1 {
-		n.startLine = lineNumber
-	}
+	n.Entries = append(n.Entries, Entry{Type: entryType, Value: string(line)})
 }
 
-func (n *Node) appendComment(comment []byte, lineNumber int) {
-	n.appendLine(comment, lineNumber)
-	n.commentIndexes = append(n.commentIndexes, len(n.Entries)-1)
-	if n.startLine == -1 {
-		n.startLine = lineNumber
-	}
-}
-
-func (n *Node) appendCommand(command []byte, lineNumber int) {
-	trimmed := bytes.TrimLeftFunc(command, func(r rune) bool {
-		return r == '\\'
-	})
-	n.Command += string(trimmed)
-	if n.startLine == -1 {
-		n.startLine = lineNumber
-	}
-}
-
-func Parse(r io.Reader) ([]Node, error) {
+func Parse(r io.Reader) (Nodes, error) {
 	scanner := bufio.NewScanner(r)
-	currentLine := 1
-	node := Node{startLine: -1}
+	node := Node{}
 	nodes := make([]Node, 0)
 	for scanner.Scan() {
 		line := scanner.Bytes()
 
 		if isComment(line) {
-			node.appendComment(line, currentLine)
-			currentLine++
+			node.appendLine(line, EntryComment)
 			continue
 		}
 
 		if isWhitespace(line) {
-			// node.appendLine(line, currentLine)
-			currentLine++
+			node.appendLine(line, EntryEmpty)
 			continue
 		}
 
-		node.appendLine(line, currentLine)
-		node.appendCommand(line, currentLine)
+		node.appendLine(line, EntryCommand)
 		if bytes.HasPrefix(line, []byte("FROM")) {
 			node.CommandType = CommandFrom
 		} else if bytes.HasPrefix(line, []byte("RUN")) {
@@ -98,26 +88,20 @@ func Parse(r io.Reader) ([]Node, error) {
 		for !isEndOfLine && scanner.Scan() {
 			nextLine := scanner.Bytes()
 			if isWhitespace(nextLine) {
-				// node.appendLine(nextLine, currentLine)
-				currentLine++
+				node.appendLine(nextLine, EntryEmpty)
 				continue
 			}
 			if isComment(nextLine) {
-				node.appendComment(nextLine, currentLine)
-				currentLine++
+				node.appendLine(nextLine, EntryComment)
 				continue
 			}
-			node.appendLine(nextLine, currentLine)
-			node.appendCommand(nextLine, currentLine)
+			node.appendLine(nextLine, EntryCommand)
 
 			isEndOfLine = isEndOfSection(nextLine)
-			currentLine++
 		}
 
-		node.endLine = currentLine
 		nodes = append(nodes, node)
-		currentLine++
-		node = Node{startLine: -1}
+		node = Node{}
 	}
 	return nodes, nil
 }

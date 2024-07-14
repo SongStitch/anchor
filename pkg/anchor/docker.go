@@ -33,27 +33,31 @@ func attachDockerSha2(node *Node) error {
 	if node.CommandType != CommandFrom {
 		return fmt.Errorf("Node is not a FROM command")
 	}
-	nextComment := node.NextCommentIndex()
 	for i := range node.Entries {
-		if i == nextComment {
-			nextComment = node.NextCommentIndex()
+		entry := node.Entries[i]
+		if entry.Type != EntryCommand {
 			continue
 		}
-		entry := node.Entries[i]
 
-		commandSplit := strings.Split(entry, " ")
+		commandSplit := strings.Split(entry.Value, " ")
 		if len(commandSplit) < 2 {
 			return fmt.Errorf("FROM command is missing image name")
 		}
 
+		if len(commandSplit) == 4 {
+			color.Blue("Parsing %s image...", commandSplit[3])
+		} else {
+			color.Blue("Parsing the final image...")
+		}
+
 		image := commandSplit[1]
-		image = strings.TrimSpace(image)
+		image = strings.TrimSpace((image))
 		digest, err := crane.Digest(image)
 		if err != nil {
 			return err
 		}
 
-		entry = strings.Replace(entry, image, fmt.Sprintf("%s@%s", image, digest), 1)
+		entry.Value = strings.Replace((entry.Value), image, fmt.Sprintf("%s@%s", image, digest), 1)
 		node.Entries[i] = entry
 		fmt.Printf("\t⚓Anchored %s to %s\n", image, digest)
 		// FROM command can only be one line, exit here
