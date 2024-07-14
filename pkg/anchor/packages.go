@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
 func fetchPackageVersions(
@@ -106,48 +105,4 @@ func parseCommand(command string) []string {
 	}
 
 	return packages
-}
-
-func parseRunCommand(
-	ctx context.Context,
-	node *parser.Node,
-	architecture string,
-	image string,
-) error {
-	if node == nil {
-		return nil
-	}
-
-	commands := strings.Split(node.Value, "&&")
-	for i := range commands {
-		packageNames := parseCommand(commands[i])
-		if len(packageNames) == 0 {
-			continue
-		}
-		packageMap, err := fetchPackageVersions(ctx, packageNames, architecture, image)
-		if err != nil {
-			return err
-		}
-		elements := strings.Split(commands[i], " ")
-		for j := range elements {
-			if _, ok := packageMap[elements[j]]; ok {
-				elements[j] = fmt.Sprintf(
-					"%s:%s=%s",
-					elements[j],
-					architecture,
-					packageMap[elements[j]],
-				)
-			}
-		}
-		commands[i] = strings.Join(elements, " ")
-		commands[i] = fmt.Sprintf(
-			// leading space is intentional to separate commands
-			" dpkg --add-architecture %s && apt-get update && %s",
-			architecture,
-			commands[i],
-		)
-	}
-
-	node.Value = strings.Join(commands, "&&")
-	return nil
 }

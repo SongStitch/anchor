@@ -148,7 +148,7 @@ var rootCmd = &cobra.Command{
 				}
 			}
 
-			f, err := os.Create(outputName)
+			f, err := os.Create(filepath.Clean(outputName))
 			if err != nil {
 				return fmt.Errorf("failed to create output file: %w", err)
 			}
