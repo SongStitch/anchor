@@ -47,6 +47,12 @@ func (n Nodes) Print() {
 	}
 }
 
+func (n Nodes) Write(w io.Writer) {
+	for _, node := range n {
+		node.Write(w)
+	}
+}
+
 func (n Node) Write(w io.Writer) {
 	b := []byte{}
 	for _, entry := range n.Entries {
@@ -70,7 +76,7 @@ func (n *Node) appendLine(line []byte, entryType EntryType, beginning bool, stri
 	n.Entries = append(n.Entries, Entry{Type: entryType, Value: string(line), Beginning: beginning})
 }
 
-func Parse(r io.Reader) (Nodes, error) {
+func Parse(r io.Reader) Nodes {
 	scanner := bufio.NewScanner(r)
 	node := Node{}
 	nodes := make([]Node, 0)
@@ -86,7 +92,7 @@ func Parse(r io.Reader) (Nodes, error) {
 			node.appendLine(line, EntryEmpty, false)
 			continue
 		}
-if bytes.HasPrefix(line, []byte("FROM")) {
+		if bytes.HasPrefix(line, []byte("FROM")) {
 			node.appendLine(line, EntryCommand, true)
 			node.CommandType = CommandFrom
 		} else if bytes.HasPrefix(line, []byte("RUN")) {
@@ -116,7 +122,7 @@ if bytes.HasPrefix(line, []byte("FROM")) {
 		nodes = append(nodes, node)
 		node = Node{}
 	}
-	return nodes, nil
+	return nodes
 }
 
 func isWhitespace(line []byte) bool {
