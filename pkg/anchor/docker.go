@@ -179,7 +179,14 @@ func processRunCommand(ctx context.Context, node *Node, architecture string, ima
 	if err != nil {
 		return err
 	}
+	appendPackageVersions(node, packageMap, architecture)
+	return nil
+}
 
+func appendPackageVersions(node *Node, packageMap map[string]string, architecture string) {
+	aptGet := false
+	install := false
+	dpkgSet := false
 	for i := range node.Entries {
 		entry := node.Entries[i]
 		if entry.Type != EntryCommand {
@@ -188,15 +195,46 @@ func processRunCommand(ctx context.Context, node *Node, architecture string, ima
 
 		elements := strings.Split(entry.Value, " ")
 		for j := range elements {
-			if _, ok := packageMap[elements[j]]; ok {
-				elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+			if elements[j] == "apt-get" {
+				aptGet = true
+			}
+			if aptGet && elements[j] == "install" {
+				install = true
+
+			}
+			if aptGet && install {
+				if _, ok := packageMap[elements[j]]; ok {
+					elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+				}
+			}
+			if strings.TrimSpace(elements[i]) == "&&" {
+				aptGet = false
+				install = false
 			}
 		}
 		entry.Value = strings.Join(elements, " ")
+		if !dpkgSet {
+			dpkgSet = true
+			// since we know we have packages, that must mean we have apt-get install as part of this command
+			// so we append the architecture and update to the beginning
+			if entry.Beginning {
+				s := fmt.Sprintf("RUN dpkg --add-architecture %s && apt-get update &&", architecture)
+				entry.Value = strings.Replace(entry.Value,
+					"RUN",
+					s,
+					1,
+				)
+			} else {
+				entry.Value = fmt.Sprintf(
+					// leading space is intentional to separate commands
+					" dpkg --add-architecture %s && apt-get update \\\n &&%s",
+					architecture,
+					entry.Value,
+				)
+			}
+		}
 		node.Entries[i] = entry
 	}
-
-	return nil
 }
 
 func Process(ctx context.Context, nodes []Node, architecture string) error {

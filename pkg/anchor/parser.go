@@ -26,8 +26,9 @@ const (
 )
 
 type Entry struct {
-	Type  EntryType
-	Value string
+	Type      EntryType
+	Value     string
+	Beginning bool
 }
 
 type Nodes []Node
@@ -54,18 +55,19 @@ func (n Node) Write(w io.Writer) {
 	w.Write(b)
 }
 
-func (n *Node) appendLine(line []byte, entryType EntryType, strip ...string) {
+func (n *Node) appendLine(line []byte, entryType EntryType, beginning bool, strip ...string) {
 	if entryType == EntryCommand {
 		l := string(line)
 		for _, s := range strip {
 			l = strings.TrimLeft(l, s)
-      l = strings.TrimSpace(l)
+			l = strings.TrimSpace(l)
 		}
 		n.Command += l
 	}
+
 	// new lines are trimmed by the scanner so we re-add them here
 	line = append(line, '\n')
-	n.Entries = append(n.Entries, Entry{Type: entryType, Value: string(line)})
+	n.Entries = append(n.Entries, Entry{Type: entryType, Value: string(line), Beginning: beginning})
 }
 
 func Parse(r io.Reader) (Nodes, error) {
@@ -76,23 +78,22 @@ func Parse(r io.Reader) (Nodes, error) {
 		line := scanner.Bytes()
 
 		if isComment(line) {
-			node.appendLine(line, EntryComment)
+			node.appendLine(line, EntryComment, false)
 			continue
 		}
 
 		if isWhitespace(line) {
-			node.appendLine(line, EntryEmpty)
+			node.appendLine(line, EntryEmpty, false)
 			continue
 		}
-
-		if bytes.HasPrefix(line, []byte("FROM")) {
-			node.appendLine(line, EntryCommand)
+if bytes.HasPrefix(line, []byte("FROM")) {
+			node.appendLine(line, EntryCommand, true)
 			node.CommandType = CommandFrom
 		} else if bytes.HasPrefix(line, []byte("RUN")) {
-			node.appendLine(line, EntryCommand, "RUN")
+			node.appendLine(line, EntryCommand, true, "RUN")
 			node.CommandType = CommandRun
 		} else {
-			node.appendLine(line, EntryCommand)
+			node.appendLine(line, EntryCommand, true)
 			node.CommandType = CommandOther
 		}
 
@@ -100,14 +101,14 @@ func Parse(r io.Reader) (Nodes, error) {
 		for !isEndOfLine && scanner.Scan() {
 			nextLine := scanner.Bytes()
 			if isWhitespace(nextLine) {
-				node.appendLine(nextLine, EntryEmpty)
+				node.appendLine(nextLine, EntryEmpty, false)
 				continue
 			}
 			if isComment(nextLine) {
-				node.appendLine(nextLine, EntryComment)
+				node.appendLine(nextLine, EntryComment, false)
 				continue
 			}
-			node.appendLine(nextLine, EntryCommand)
+			node.appendLine(nextLine, EntryCommand, false)
 
 			isEndOfLine = isEndOfSection(nextLine)
 		}
