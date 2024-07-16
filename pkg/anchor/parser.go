@@ -47,18 +47,23 @@ func (n Nodes) Print() {
 	}
 }
 
-func (n Nodes) Write(w io.Writer) {
+func (n Nodes) Write(w io.Writer) error {
 	for _, node := range n {
-		node.Write(w)
+		err := node.Write(w)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (n Node) Write(w io.Writer) {
+func (n Node) Write(w io.Writer) error {
 	b := []byte{}
 	for _, entry := range n.Entries {
 		b = append(b, []byte(entry.Value)...)
 	}
-	w.Write(b)
+	_, err := w.Write(b)
+	return err
 }
 
 func (n *Node) appendLine(line []byte, entryType EntryType, beginning bool, strip ...string) {

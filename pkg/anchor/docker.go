@@ -12,7 +12,7 @@ import (
 
 func processFromCommand(node *Node) (string, error) {
 	if node.CommandType != CommandFrom {
-		return "", fmt.Errorf("Node is not a FROM command")
+		return "", fmt.Errorf("node is not a FROM command")
 	}
 	for i := range node.Entries {
 		entry := node.Entries[i]
@@ -44,7 +44,7 @@ func processFromCommand(node *Node) (string, error) {
 		// FROM command can only be one line, exit here
 		return image, nil
 	}
-	return "", fmt.Errorf("Node did not contain a FROM command")
+	return "", fmt.Errorf("node did not contain a FROM command")
 }
 
 func IsDockerInstalled() bool {
@@ -67,7 +67,7 @@ func IsDockerRunning() bool {
 
 func processRunCommand(ctx context.Context, node *Node, architecture string, image string) error {
 	if node.CommandType != CommandRun {
-		return fmt.Errorf("Node is not a RUN command")
+		return fmt.Errorf("node is not a RUN command")
 	}
 
 	packageNames := parseCommand(node.Command)

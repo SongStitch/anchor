@@ -34,7 +34,7 @@ func fetchPackageVersions(
 
 	versions, err := parsePackageVersions(stdoutBuf.String())
 	if err != nil {
-		fmt.Printf("Error parsing versions: %s\n", stderrBuf.String())
+		fmt.Printf("error parsing versions: %s\n", stderrBuf.String())
 		return nil, err
 	}
 	return versions, nil

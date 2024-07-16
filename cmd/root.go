@@ -148,15 +148,21 @@ var rootCmd = &cobra.Command{
 				}
 			}
 
-			f, err := os.Create(filepath.Clean(outputName))
+			outputFile, err := os.Create(filepath.Clean(outputName))
 			if err != nil {
 				return fmt.Errorf("failed to create output file: %w", err)
 			}
-			defer f.Close()
+			defer outputFile.Close()
 
-			w := bufio.NewWriter(f)
-			nodes.Write(w)
-			w.Flush()
+			writer := bufio.NewWriter(outputFile)
+			err = nodes.Write(writer)
+			if err != nil {
+				return fmt.Errorf("failed to write to output file: %w", err)
+			}
+			err = writer.Flush()
+			if err != nil {
+				return fmt.Errorf("failed to flush to output file: %w", err)
+			}
 			color.Green("Generated anchored Dockerfile: %s", absPath)
 		}
 		return nil
