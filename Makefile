@@ -89,7 +89,7 @@ run: ## Runs the binary
 	go run main.go $(ARGS)
 
 test: ## Runs the tests
-	go test -v .
+	go test -v ./...
 
 build: format-lint ## Builds the binary for your current platform
 	go build -o bin/${BINARY_NAME} main.go

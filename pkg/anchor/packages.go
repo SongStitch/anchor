@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
 
 func fetchPackageVersions(
@@ -21,14 +21,7 @@ func fetchPackageVersions(
 		command += " " + pkg + ":" + architecture
 	}
 	c := exec.CommandContext(
-		ctx,
-		"docker",
-		"run",
-		"--rm",
-		image,
-		"bash",
-		"-c",
-		command,
+		ctx, "docker", "run", "--rm", image, "bash", "-c", command,
 	) // #nosec G204
 	c.Stdout = &stdoutBuf
 	c.Stderr = &stderrBuf // Use a buffer to capture stderr output
@@ -41,7 +34,7 @@ func fetchPackageVersions(
 
 	versions, err := parsePackageVersions(stdoutBuf.String())
 	if err != nil {
-		fmt.Printf("Error parsing versions: %s\n", stderrBuf.String())
+		fmt.Printf("error parsing versions: %s\n", stderrBuf.String())
 		return nil, err
 	}
 	return versions, nil
@@ -61,6 +54,12 @@ func parsePackageVersions(s string) (map[string]string, error) {
 			if currentPackage == "" {
 				return nil, fmt.Errorf("version found before package, offending line: %s", line)
 			}
+
+			if _, ok := versions[currentPackage]; ok {
+				// We have already seen this package, so we can skip it
+				currentPackage = ""
+				continue
+			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
 			fmt.Printf(
 				"\t⚓Anchored %s to %s\n",
@@ -74,81 +73,46 @@ func parsePackageVersions(s string) (map[string]string, error) {
 }
 
 func parseCommand(command string) []string {
-	components := strings.Split(command, " ")
-	var stripped []string
-	for _, part := range components {
-		if part == "" {
+	commands := strings.Split(command, "&&")
+	packages := []string{}
+	for _, c := range commands {
+		components := strings.Split(c, " ")
+		var stripped []string
+		for _, part := range components {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			if part == "\\" {
+				continue
+			}
+			if !strings.HasPrefix(part, "-") {
+				stripped = append(stripped, part)
+			}
+		}
+		if len(stripped) < 3 {
 			continue
 		}
-		if !strings.HasPrefix(part, "-") {
-			stripped = append(stripped, part)
-		}
-	}
-	if len(stripped) < 3 {
-		return []string{}
-	}
-	var packages []string
-	for i, part := range stripped {
-		if i == 0 {
-			if part != "apt-get" {
-				return []string{}
-			} else {
-				continue
+		for i, part := range stripped {
+			if i == 0 {
+				if part != "apt-get" {
+					break
+				} else {
+					continue
+				}
+			}
+			if i == 1 {
+				if part != "install" {
+					break
+				} else {
+					continue
+				}
+			}
+			if !slices.Contains(packages, part) {
+				packages = append(packages, part)
 			}
 		}
-		if i == 1 {
-			if part != "install" {
-				return []string{}
-			} else {
-				continue
-			}
-		}
-		packages = append(packages, part)
 	}
 
 	return packages
-}
-
-func parseRunCommand(
-	ctx context.Context,
-	node *parser.Node,
-	architecture string,
-	image string,
-) error {
-	if node == nil {
-		return nil
-	}
-
-	commands := strings.Split(node.Value, "&&")
-	for i := range commands {
-		packageNames := parseCommand(commands[i])
-		if len(packageNames) == 0 {
-			continue
-		}
-		packageMap, err := fetchPackageVersions(ctx, packageNames, architecture, image)
-		if err != nil {
-			return err
-		}
-		elements := strings.Split(commands[i], " ")
-		for j := range elements {
-			if _, ok := packageMap[elements[j]]; ok {
-				elements[j] = fmt.Sprintf(
-					"%s:%s=%s",
-					elements[j],
-					architecture,
-					packageMap[elements[j]],
-				)
-			}
-		}
-		commands[i] = strings.Join(elements, " ")
-		commands[i] = fmt.Sprintf(
-			// leading space is intentional to separate commands
-			" dpkg --add-architecture %s && apt-get update && %s",
-			architecture,
-			commands[i],
-		)
-	}
-
-	node.Value = strings.Join(commands, "&&")
-	return nil
 }

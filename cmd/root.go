@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/fatih/color"
-	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/spf13/cobra"
 
 	"github.com/songstitch/anchor/pkg/anchor"
@@ -106,42 +105,19 @@ var rootCmd = &cobra.Command{
 		}
 		appendArch := len(options.Architectures) > 1
 
-		content, err := os.Open(options.InputFile)
-		if err != nil {
-			return err
-		}
-		defer content.Close()
-		lines := []string{}
-		scanner := bufio.NewScanner(content)
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-
-		if err := scanner.Err(); err != nil {
-			return err
-		}
 		for _, architecture := range options.Architectures {
 			content, err := os.Open(options.InputFile)
 			if err != nil {
 				return err
 			}
+			nodes := anchor.Parse(content)
 			defer content.Close()
-			result, err := parser.Parse(content)
-			if err != nil {
-				return err
-			}
-
-			node := result.AST
-
 			color.Cyan("Anchoring to architecture: %s\n", architecture)
-			image := ""
-			err = anchor.ParseNode(ctx, node, architecture, &image)
+			err = anchor.Process(ctx, nodes, architecture)
 			if err != nil {
 				return err
 			}
 
-			var builder strings.Builder
-			anchor.WriteDockerfile(&builder, node, true, 0, lines)
 			outputName := options.OutputFile
 			if appendArch {
 				outputName = fmt.Sprintf("%s.%s", outputName, architecture)
@@ -149,7 +125,7 @@ var rootCmd = &cobra.Command{
 
 			if dryRun {
 				color.Green("Generated anchored Dockerfile\n")
-				fmt.Println(builder.String())
+				nodes.Write(os.Stdout)
 				return nil
 			}
 
@@ -167,13 +143,25 @@ var rootCmd = &cobra.Command{
 
 				if strings.ToLower(response) != "y\n" {
 					color.Green("Generated anchored Dockerfile\n")
-					fmt.Println(builder.String())
+					nodes.Write(os.Stdout)
 					return fmt.Errorf("exiting without writing file")
 				}
 			}
-			err = os.WriteFile(outputName, []byte(builder.String()), 0600)
+
+			outputFile, err := os.Create(filepath.Clean(outputName))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create output file: %w", err)
+			}
+			defer outputFile.Close()
+
+			writer := bufio.NewWriter(outputFile)
+			err = nodes.Write(writer)
+			if err != nil {
+				return fmt.Errorf("failed to write to output file: %w", err)
+			}
+			err = writer.Flush()
+			if err != nil {
+				return fmt.Errorf("failed to flush to output file: %w", err)
 			}
 			color.Green("Generated anchored Dockerfile: %s", absPath)
 		}
