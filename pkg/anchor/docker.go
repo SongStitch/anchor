@@ -15,8 +15,13 @@ func processFromCommand(node *Node) (string, error) {
 	if node.CommandType != CommandFrom {
 		return "", fmt.Errorf("node is not a FROM command")
 	}
+	ignoredPackages := []string{}
 	for i := range node.Entries {
 		entry := node.Entries[i]
+		if entry.Type == EntryComment {
+			ignored := parseComment(entry)
+			ignoredPackages = append(ignoredPackages, ignored...)
+		}
 		if entry.Type != EntryCommand {
 			continue
 		}
@@ -34,6 +39,10 @@ func processFromCommand(node *Node) (string, error) {
 
 		image := commandSplit[1]
 		image = strings.TrimSpace((image))
+		if slices.Contains(ignoredPackages, image) {
+			return image, nil
+		}
+
 		digest, err := crane.Digest(image)
 		if err != nil {
 			return "", err
