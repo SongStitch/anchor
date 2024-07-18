@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -82,12 +83,49 @@ func processRunCommand(ctx context.Context, node *Node, architecture string, ima
 	return nil
 }
 
+func parseComment(entry Entry) []string {
+	ignoredPackages := []string{}
+	if entry.Type != EntryComment {
+		return ignoredPackages
+	}
+
+	command := strings.TrimLeft(entry.Value, "# ")
+	commands := strings.SplitN(command, " ", 2)
+	if len(commands) < 2 {
+		return ignoredPackages
+	}
+	if strings.TrimSpace(commands[0]) != "anchor" {
+		return ignoredPackages
+	}
+
+	next := strings.SplitN(commands[1], "=", 2)
+	if len(next) < 2 {
+		return ignoredPackages
+	}
+
+	if strings.TrimSpace(next[0]) != "ignore" {
+		return ignoredPackages
+	}
+
+	packages := strings.Split(next[1], ",")
+	for _, pkg := range packages {
+		ignoredPackages = append(ignoredPackages, strings.TrimSpace(pkg))
+	}
+
+	return ignoredPackages
+}
+
 func appendPackageVersions(node *Node, packageMap map[string]string, architecture string) {
 	aptGet := false
 	install := false
 	dpkgSet := false
+	ignoredPackages := []string{}
 	for i := range node.Entries {
 		entry := node.Entries[i]
+		if entry.Type == EntryComment {
+			ignored := parseComment(entry)
+			ignoredPackages = append(ignoredPackages, ignored...)
+		}
 		if entry.Type != EntryCommand {
 			continue
 		}
@@ -102,8 +140,11 @@ func appendPackageVersions(node *Node, packageMap map[string]string, architectur
 
 			}
 			if aptGet && install {
-				if _, ok := packageMap[elements[j]]; ok {
-					elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+				pkg := strings.TrimSpace(elements[j])
+				if _, ok := packageMap[pkg]; ok {
+					if !slices.Contains(ignoredPackages, pkg) {
+						elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
+					}
 				}
 			}
 			if strings.TrimSpace(elements[j]) == "&&" {
