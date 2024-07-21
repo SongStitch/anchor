@@ -61,11 +61,6 @@ func parsePackageVersions(s string) (map[string]string, error) {
 				continue
 			}
 			versions[currentPackage] = strings.Split(line, ": ")[1]
-			fmt.Printf(
-				"\t⚓Anchored %s to %s\n",
-				currentPackage,
-				versions[currentPackage],
-			)
 			currentPackage = ""
 		}
 	}

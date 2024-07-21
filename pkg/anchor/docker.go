@@ -152,6 +152,11 @@ func appendPackageVersions(node *Node, packageMap map[string]string, architectur
 				pkg := strings.TrimSpace(elements[j])
 				if _, ok := packageMap[pkg]; ok {
 					if !slices.Contains(ignoredPackages, pkg) {
+						fmt.Printf(
+							"\t⚓Anchored %s to %s\n",
+							pkg,
+							packageMap[elements[j]],
+						)
 						elements[j] = fmt.Sprintf("%s=%s", elements[j], packageMap[elements[j]])
 					}
 				}
