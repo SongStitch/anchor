@@ -58,9 +58,10 @@ RUN dpkg --add-architecture %s && apt-get update && apt-get update \
 
 func TestParseComment(t *testing.T) {
 	cases := []struct {
-		name     string
-		entry    Entry
-		expected []string
+		name            string
+		entry           Entry
+		expectedIgnored []string
+		expectedAll     bool
 	}{
 		{
 			name: "simple comment",
@@ -68,7 +69,8 @@ func TestParseComment(t *testing.T) {
 				Type:  EntryComment,
 				Value: "# anchor ignore=curl,wget",
 			},
-			expected: []string{"curl", "wget"},
+			expectedIgnored: []string{"curl", "wget"},
+			expectedAll:     false,
 		},
 		{
 			name: "poorly formatted comment",
@@ -76,7 +78,8 @@ func TestParseComment(t *testing.T) {
 				Type:  EntryComment,
 				Value: "#anchor ignore =curl,     test,wget",
 			},
-			expected: []string{"curl", "test", "wget"},
+			expectedIgnored: []string{"curl", "test", "wget"},
+			expectedAll:     false,
 		},
 		{
 			name: "non anchor comment",
@@ -84,7 +87,8 @@ func TestParseComment(t *testing.T) {
 				Type:  EntryComment,
 				Value: "# hadolint ignore=DL3008",
 			},
-			expected: []string{},
+			expectedIgnored: []string{},
+			expectedAll:     false,
 		},
 		{
 			name: "non anchor ignore comment",
@@ -92,14 +96,27 @@ func TestParseComment(t *testing.T) {
 				Type:  EntryComment,
 				Value: "# anchor is a tool for anchoring dependencies in dockerfiles",
 			},
-			expected: []string{},
+			expectedIgnored: []string{},
+			expectedAll:     false,
+		},
+		{
+			name: "basic ignore all",
+			entry: Entry{
+				Type:  EntryComment,
+				Value: "# anchor ignore",
+			},
+			expectedIgnored: []string{},
+			expectedAll:     true,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := parseComment(tc.entry)
-			if !reflect.DeepEqual(actual, tc.expected) {
-				t.Errorf("Expected %v but got %v", tc.expected, actual)
+			actual, all := parseComment(tc.entry)
+			if !reflect.DeepEqual(actual, tc.expectedIgnored) {
+				t.Errorf("Expected %v but got %v", tc.expectedIgnored, actual)
+			}
+			if all != tc.expectedAll {
+				t.Errorf("Expected %v but got %v", tc.expectedAll, all)
 			}
 		})
 	}
