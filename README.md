@@ -27,6 +27,7 @@ A tool for anchoring dependencies in dockerfiles
   - [Specifying Input and Output Files](#specifying-input-and-output-files)
   - [Non-Interactive Mode (CI/CD Pipelines)](#non-interactive-mode-cicd-pipelines)
   - [Printing the Output Instead of Writing to a File](#printing-the-output-instead-of-writing-to-a-file)
+  - [Ignoring Images and Packages](#ignoring-sections)
 - [License](#license)
 
 <!-- tocstop -->
@@ -138,6 +139,34 @@ You can print the output to stdout by using the `-p` flag.
 
 ```shell
 anchor -i Dockerfile.template --dry-run
+```
+
+## Ignoring Images and Packages
+
+It is possible to tell anchor to ignore images and packages in the Dockerfile statement by adding a `# anchor ignore` comment above the statement in the Dockerfile template. For example:
+
+```dockerfile
+# ignore this statement
+# anchor ignore
+FROM golang:1.22-bookworm as builder
+
+# ignore this statement
+# anchor ignore
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y curl wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# explicitly tell anchor to ignore this image
+# anchor ignore=golang:1.22-bookworm
+FROM golang:1.22-bookworm
+
+# explicitly tell anchor to ignore the curl package
+# anchor ignore=curl
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y curl wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 ```
 
 # License

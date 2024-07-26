@@ -1,6 +1,7 @@
 # Test Dockerfile for anchor
 FROM golang:1.22-bookworm as builder
 
+# anchor ignore=curl,wget
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --no-install-recommends -y curl wget \
