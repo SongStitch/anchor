@@ -27,7 +27,7 @@ A tool for anchoring dependencies in dockerfiles
   - [Specifying Input and Output Files](#specifying-input-and-output-files)
   - [Non-Interactive Mode (CI/CD Pipelines)](#non-interactive-mode-cicd-pipelines)
   - [Printing the Output Instead of Writing to a File](#printing-the-output-instead-of-writing-to-a-file)
-  - [Ignoring Images and Packages](#ignoring-sections)
+  - [Ignoring Images and Packages](#ignoring-images-and-packages)
 - [License](#license)
 
 <!-- tocstop -->
