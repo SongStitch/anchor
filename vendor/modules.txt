@@ -23,7 +23,7 @@ github.com/docker/docker-credential-helpers/credentials
 github.com/fatih/color
 # github.com/google/go-cmp v0.6.0
 ## explicit; go 1.13
-# github.com/google/go-containerregistry v0.19.1
+# github.com/google/go-containerregistry v0.20.1
 ## explicit; go 1.18
 github.com/google/go-containerregistry/internal/and
 github.com/google/go-containerregistry/internal/compression
@@ -87,7 +87,7 @@ github.com/pkg/errors
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/spf13/cobra v1.8.0
+# github.com/spf13/cobra v1.8.1
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
