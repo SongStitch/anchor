@@ -166,8 +166,8 @@ RUN dpkg --add-architecture %s && apt-get update && apt-get update \
 
 func TestImageIgnore(t *testing.T) {
 	file := `# hadolint ignore=DL3008
-  # anchor ignore=golang:1.22-bookworm
-FROM golang:1.22-bookworm as builder
+  # anchor ignore=golang:1.23-bookworm
+FROM golang:1.23-bookworm as builder
 `
 
 	input := strings.NewReader(file)
@@ -176,7 +176,7 @@ FROM golang:1.22-bookworm as builder
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	if image != "golang:1.22-bookworm" {
-		t.Errorf("Expected golang:1.22-bookworm but got %v", image)
+	if image != "golang:1.23-bookworm" {
+		t.Errorf("Expected golang:1.23-bookworm but got %v", image)
 	}
 }
