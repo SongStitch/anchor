@@ -68,7 +68,7 @@ Given this `Dockerfile`
 
 ```dockerfile
 # Comments are preserved
-FROM golang:1.22-bookworm as builder
+FROM golang:1.23-bookworm as builder
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y curl wget \
@@ -80,7 +80,7 @@ Running `anchor` will generate the following `Dockerfile`
 
 ```dockerfile
 # Comments are preserved
-FROM golang:1.22-bookworm@sha256:5c56bd47228dd572d8a82971cf1f946cd8bb1862a8ec6dc9f3d387cc94136976 as builder
+FROM golang:1.23-bookworm@sha256:31dc846dd1bcca84d2fa231bcd16c09ff271bcc1a5ae2c48ff10f13b039688f3 as builder
 
 RUN apt-get update \
     && dpkg --add-architecture arm64 && apt-get update && \
@@ -148,7 +148,7 @@ It is possible to tell anchor to ignore images and packages in the Dockerfile st
 ```dockerfile
 # ignore this statement
 # anchor ignore
-FROM golang:1.22-bookworm as builder
+FROM golang:1.23-bookworm as builder
 
 # ignore this statement
 # anchor ignore
@@ -158,8 +158,8 @@ RUN apt-get update \
     && apt-get clean
 
 # explicitly tell anchor to ignore this image
-# anchor ignore=golang:1.22-bookworm
-FROM golang:1.22-bookworm
+# anchor ignore=golang:1.23-bookworm
+FROM golang:1.23-bookworm
 
 # explicitly tell anchor to ignore the curl package
 # anchor ignore=curl

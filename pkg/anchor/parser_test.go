@@ -49,11 +49,11 @@ func TestParser(t *testing.T) {
 			"Simple multiline node",
 			`# Test Dockerfile for anchor
 
-FROM golang:1.22-bookworm as builder`,
+FROM golang:1.23-bookworm as builder`,
 			Nodes{
 				{
 					CommandType: CommandFrom,
-					Command:     "FROM golang:1.22-bookworm as builder",
+					Command:     "FROM golang:1.23-bookworm as builder",
 					Entries: []Entry{
 						{
 							Type:  EntryComment,
@@ -65,7 +65,7 @@ FROM golang:1.22-bookworm as builder`,
 						},
 						{
 							Type:      EntryCommand,
-							Value:     "FROM golang:1.22-bookworm as builder\n",
+							Value:     "FROM golang:1.23-bookworm as builder\n",
 							Beginning: true,
 						},
 					},
@@ -74,7 +74,7 @@ FROM golang:1.22-bookworm as builder`,
 		},
 		{
 			"Multiple nodes",
-			`FROM golang:1.22-bookworm
+			`FROM golang:1.23-bookworm
 # hadolint ignore=DL3008
 RUN apt-get update \
   && apt-get install \
@@ -86,11 +86,11 @@ RUN apt-get update \
 			Nodes{
 				{
 					CommandType: CommandFrom,
-					Command:     "FROM golang:1.22-bookworm",
+					Command:     "FROM golang:1.23-bookworm",
 					Entries: []Entry{
 						{
 							Type:      EntryCommand,
-							Value:     "FROM golang:1.22-bookworm\n",
+							Value:     "FROM golang:1.23-bookworm\n",
 							Beginning: true,
 						},
 					},
