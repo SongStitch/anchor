@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -24,7 +25,7 @@ universal_binaries:
 brews:
   - name: anchor
     homepage: "https://github.com/SongStitch/anchor"
-    tap:
+    repository:
       owner: SongStitch
       name: homebrew-anchor
     commit_author:
