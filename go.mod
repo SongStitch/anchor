@@ -4,15 +4,14 @@ go 1.22.1
 
 require (
 	github.com/fatih/color v1.17.0
-	github.com/google/go-containerregistry v0.19.1
-	github.com/spf13/cobra v1.8.0
+	github.com/google/go-containerregistry v0.20.2
+	github.com/spf13/cobra v1.8.1
 )
 
 require (
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
-	github.com/docker/cli v25.0.3+incompatible // indirect
+	github.com/docker/cli v27.1.1+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v26.1.5+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
