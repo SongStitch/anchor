@@ -1,6 +1,9 @@
 [default]
 locale = "en-au"
 
+[default.extend-identifiers]
+center = "center"
+
 [files]
 ignore-vcs = true
 extend-exclude = [
