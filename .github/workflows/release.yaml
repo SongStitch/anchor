@@ -11,7 +11,7 @@ jobs:
     name: "Release"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: setup-go
         uses: ./.github/actions/setup-go
 
@@ -45,7 +45,7 @@ jobs:
           echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: latest
