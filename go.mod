@@ -1,6 +1,7 @@
 module github.com/songstitch/anchor
 
-go 1.23
+go 1.24
+
 require (
 	github.com/fatih/color v1.18.0
 	github.com/google/go-containerregistry v0.20.3
@@ -13,7 +14,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
